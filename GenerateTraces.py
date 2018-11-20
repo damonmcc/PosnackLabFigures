@@ -14,6 +14,9 @@ dataVm240 = np.loadtxt(fileVm240, delimiter=',', skiprows=0)
 dataCa240 = np.loadtxt(fileCa240, delimiter=',', skiprows=0)
 time240 = np.loadtxt(file240time, delimiter=',', skiprows=0)
 
+axes[0].set_ylabel('Normalized\nFluorescence, PCL 150 ms', fontsize=7, fontweight='bold')
+axes[1].set_ylabel('Normalized\nFluorescence, PCL 200 ms', fontsize=7, fontweight='bold')
+axes[2].set_ylabel('Normalized\nFluorescence, PCL 250 ms', fontsize=7, fontweight='bold')
 
 for ax in axes.flat:
     ax.tick_params(axis='x', which='both', direction='in')
@@ -29,7 +32,6 @@ for ax in axes.flat:
 for idx, ax in enumerate(axes.flat, start=1):
     ax.plot(time240*1000, dataVm240, color='r', linewidth=1, label='Vm')
     ax.plot(time240*1000, dataCa240, color='y', linewidth=1, label='Cm')
-    ax.set_ylabel('Normalized\nFluorescence #'+str(idx), fontsize=7, fontweight='bold')
 
 plt.xlabel('Time (ms)', fontsize=8, fontweight='bold')
 legend_lines = [Line2D([0], [0], color='r', lw=1),
