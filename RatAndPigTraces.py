@@ -44,19 +44,26 @@ PigImageVm = np.rot90(plt.imread('data/20181109-pigb/Voltage/12-300_Vm_0001.tif'
 axPigImageVm.axis('off')
 axPigImageVm.imshow(PigImageVm, cmap='bone')
 axPigImageVm.set_title('Pig, Vm', fontsize=7, fontweight='bold')
+PigTraceVm = np.loadtxt('data/20181109-pigb/Voltage/12-300_Vm_x74y228r10.csv', delimiter=',', usecols=[0], skiprows=0)
 PigImageCa = np.rot90(plt.imread('data/20181109-pigb/Calcium/12-300_Ca_0001.tif'))
 axPigImageCa.axis('off')
 axPigImageCa.imshow(PigImageCa, cmap='bone')
 axPigImageCa.set_title('Pig, Ca', fontsize=7, fontweight='bold')
-
+PigTraceCa = np.loadtxt('data/20181109-pigb/Calcium/12-300_Ca_x74y228r10.csv', delimiter=',', usecols=[0], skiprows=0)
+PigTraceTime = np.loadtxt('data/20181109-pigb/Calcium/12-300_Ca_x74y228r10.csv', delimiter=',', usecols=[1], skiprows=0)
+PigTraces = [PigTraceVm, PigTraceCa]
 
 xlim = [150, 450]
 ylim = [0, 1]
-for ax in [axPigTraceVm, axPigTraceCa]:
+for idk, ax in enumerate([axPigTraceVm, axPigTraceCa]):
     ax.tick_params(axis='x', which='both', direction='in')
     ax.tick_params(axis='y', which='both', direction='in')
     ax.spines['right'].set_visible(False)
     ax.spines['top'].set_visible(False)
+    plt.xlabel('Time (ms)', fontsize=8, fontweight='bold')
+
+axPigTraceVm.plot(PigTraceTime, PigTraceVm, color='r', linewidth=1, label='Vm')
+axPigTraceCa.plot(PigTraceTime, PigTraceCa, color='y', linewidth=1, label='Vm')
 
 
 plt.show()
