@@ -1,2 +1,2 @@
 # DualMappingFigures
-Python scripts to create figures from dual-mapping data
+Python scripts to create figures from dual-mapping optical data
