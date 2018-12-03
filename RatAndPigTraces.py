@@ -64,16 +64,17 @@ axRatImageVm.add_patch(RatROI_CircleVm)
 axRatImageCa.add_patch(RatROI_CircleCa)
 # Rat Traces
 axRatTracePCL1.set_title('PCL: 150 ms', fontproperties=titleFont)
-axRatTracePCL3.set_title('PCL: 250 ms', fontproperties=titleFont)
 axRatTracePCL2.set_title('PCL: 200 ms', fontproperties=titleFont)
+axRatTracePCL3.set_title('PCL: 220 ms', fontproperties=titleFont)
 # Load data from .csv files
-RatTracePCL1Vm = np.genfromtxt('data/20180806-rata/Voltage/30-150_Vm_x217y56r45.csv', delimiter=',', usecols=[0])
-RatTracePCL1Ca = np.loadtxt('data/20180806-rata/Calcium/30-150_Ca_x217y56r45.csv', delimiter=',', usecols=[0])
-RatTracePCL2Vm = np.loadtxt('data/20180806-rata/Voltage/24-200_Vm_x217y56r45.csv', delimiter=',', usecols=[0])
-RatTracePCL2Ca = np.loadtxt('data/20180806-rata/Calcium/24-200_Ca_x217y56r45.csv', delimiter=',', usecols=[0])
-RatTracePCL3Vm = np.loadtxt('data/20180806-rata/Voltage/19-250_Vm_x217y56r45.csv', delimiter=',', usecols=[0])
-RatTracePCL3Ca = np.loadtxt('data/20180806-rata/Calcium/19-250_Ca_x217y56r45.csv', delimiter=',', usecols=[0])
-RatTraceTime = np.loadtxt('data/20180806-rata/Calcium/13-150_Ca_x349y114r10.csv', delimiter=',', usecols=[1])
+# Row format:
+# SIGNAL VALUE, TIME(ms)
+RatTracePCL1Vm = np.genfromtxt('data/20180806-rata/Voltage/30-150_Vm_x217y56r45.csv', delimiter=',')
+RatTracePCL1Ca = np.genfromtxt('data/20180806-rata/Calcium/30-150_Ca_x217y56r45.csv', delimiter=',')
+RatTracePCL2Vm = np.genfromtxt('data/20180806-rata/Voltage/24-200_Vm_x217y56r45.csv', delimiter=',')
+RatTracePCL2Ca = np.genfromtxt('data/20180806-rata/Calcium/24-200_Ca_x217y56r45.csv', delimiter=',')
+RatTracePCL3Vm = np.genfromtxt('data/20180806-rata/Voltage/22-220_Vm_x217y56r45.csv', delimiter=',')
+RatTracePCL3Ca = np.genfromtxt('data/20180806-rata/Calcium/22-220_Ca_x217y56r45.csv', delimiter=',')
 xLimitRat = [0, 0.8]
 yLimitRat = [0, 1]
 lineWidthRat = 0.4
@@ -92,17 +93,21 @@ for idk, ax in enumerate([axRatTracePCL1, axRatTracePCL2, axRatTracePCL3]):
 axRatTracePCL3.set_xlabel('Time (ms)', fontsize=7)
 axRatTracePCL2.set_ylabel('Normalized Vm & Ca\nFluorescence @ ROI', fontproperties=titleFont)
 # Plot Traces
-axRatTracePCL1.plot(RatTraceTime, RatTracePCL1Vm[0:len(RatTraceTime)],
+
+# axRatTracePCL1.set_xlim([0, 0.6])
+axRatTracePCL1.plot(RatTracePCL1Vm[:, 1], RatTracePCL1Vm[:, 0],
                     color='r', linewidth=lineWidthRat, label='Vm')
-axRatTracePCL1.plot(RatTraceTime, RatTracePCL1Ca[0:len(RatTraceTime)],
+axRatTracePCL1.plot(RatTracePCL1Ca[:, 1], RatTracePCL1Ca[:, 0],
                     color='y', linewidth=lineWidthRat, label='Ca')
-axRatTracePCL2.plot(RatTraceTime, RatTracePCL2Vm[0:len(RatTraceTime)],
+# axRatTracePCL2.set_xlim([0.2, 0.8])
+axRatTracePCL2.plot(RatTracePCL2Vm[:, 1], RatTracePCL2Vm[:, 0],
                     color='r', linewidth=lineWidthRat, label='Vm')
-axRatTracePCL2.plot(RatTraceTime, RatTracePCL2Ca[0:len(RatTraceTime)],
+axRatTracePCL2.plot(RatTracePCL2Ca[:, 1], RatTracePCL2Ca[:, 0],
                     color='y', linewidth=lineWidthRat, label='Ca')
-axRatTracePCL3.plot(RatTraceTime, RatTracePCL3Vm[0:len(RatTraceTime)],
+# axRatTracePCL3.set_xlim([0.2, 0.6])
+axRatTracePCL3.plot(RatTracePCL3Vm[:, 1], RatTracePCL3Vm[:, 0],
                     color='r', linewidth=lineWidthRat, label='Vm')
-axRatTracePCL3.plot(RatTraceTime, RatTracePCL3Ca[0:len(RatTraceTime)],
+axRatTracePCL3.plot(RatTracePCL3Ca[:, 1], RatTracePCL3Ca[:, 0],
                     color='y', linewidth=lineWidthRat, label='Ca')
 
 # Pig data loading and plotting
@@ -138,14 +143,16 @@ axPigTracePCL1.set_title('PCL: 180 ms', fontproperties=titleFont)
 axPigTracePCL2.set_title('PCL: 200 ms', fontproperties=titleFont)
 axPigTracePCL3.set_title('PCL: 220 ms', fontproperties=titleFont)
 # Load data from .csv files
-PigTracePCL1Vm = np.loadtxt('data/20181109-pigb/Voltage/20-180_Vm_x253y150r80.csv', delimiter=',', usecols=[0])
-PigTracePCL1Ca = np.loadtxt('data/20181109-pigb/Calcium/20-180_Ca_x253y150r80.csv', delimiter=',', usecols=[0])
-PigTracePCL2Vm = np.loadtxt('data/20181109-pigb/Voltage/18-200_Vm_x253y150r80.csv', delimiter=',', usecols=[0])
-PigTracePCL2Ca = np.loadtxt('data/20181109-pigb/Calcium/18-200_Ca_x253y150r80.csv', delimiter=',', usecols=[0])
-PigTracePCL3Vm = np.loadtxt('data/20181109-pigb/Voltage/16-220_Vm_x253y150r80.csv', delimiter=',', usecols=[0])
-PigTracePCL3Ca = np.loadtxt('data/20181109-pigb/Calcium/16-220_Ca_x253y150r80.csv', delimiter=',', usecols=[0])
-PigTraceTime = np.loadtxt('data/20181109-pigb/Calcium/20-180_Ca_x253y150r80.csv', delimiter=',', usecols=[1])
-xLimitPig = [0, 0.8]
+# Row format:
+# SIGNAL VALUE, TIME(ms)
+PigTracePCL1Vm = np.genfromtxt('data/20181109-pigb/Voltage/20-180_Vm_x253y150r80.csv', delimiter=',')
+PigTracePCL1Ca = np.genfromtxt('data/20181109-pigb/Calcium/20-180_Ca_x253y150r80.csv', delimiter=',')
+PigTracePCL2Vm = np.genfromtxt('data/20181109-pigb/Voltage/18-200_Vm_x253y150r80.csv', delimiter=',')
+PigTracePCL2Ca = np.genfromtxt('data/20181109-pigb/Calcium/18-200_Ca_x253y150r80.csv', delimiter=',')
+PigTracePCL3Vm = np.genfromtxt('data/20181109-pigb/Voltage/16-220_Vm_x253y150r80.csv', delimiter=',')
+PigTracePCL3Ca = np.genfromtxt('data/20181109-pigb/Calcium/16-220_Ca_x253y150r80.csv', delimiter=',')
+# PigTraceTime = np.loadtxt('data/20181109-pigb/Calcium/20-180_Ca_x253y150r80.csv', delimiter=',')
+xLimitPig = [0.2, 0.8]
 yLimitPig = [0, 1]
 lineWidthPig = 0.4
 # Format figures
@@ -163,17 +170,17 @@ for idk, ax in enumerate([axPigTracePCL1, axPigTracePCL2, axPigTracePCL3]):
     plt.xlabel('Time (ms)', fontsize=7)
 axPigTracePCL2.set_ylabel('Normalized Vm & Ca\nFluorescence @ ROI', fontproperties=titleFont)
 # Plot traces
-axPigTracePCL1.plot(PigTraceTime, PigTracePCL1Vm[0:len(PigTraceTime)],
+axPigTracePCL1.plot(PigTracePCL1Vm[:, 1], PigTracePCL1Vm[:, 0],
                     color='r', linewidth=lineWidthPig, label='Vm')
-axPigTracePCL1.plot(PigTraceTime, PigTracePCL1Ca[0:len(PigTraceTime)],
+axPigTracePCL1.plot(PigTracePCL1Ca[:, 1], PigTracePCL1Ca[:, 0],
                     color='y', linewidth=lineWidthPig, label='Ca')
-axPigTracePCL2.plot(PigTraceTime, PigTracePCL2Vm[0:len(PigTraceTime)],
+axPigTracePCL2.plot(PigTracePCL2Vm[:, 1], PigTracePCL2Vm[:, 0],
                     color='r', linewidth=lineWidthPig, label='Vm')
-axPigTracePCL2.plot(PigTraceTime, PigTracePCL2Ca[0:len(PigTraceTime)],
+axPigTracePCL2.plot(PigTracePCL2Ca[:, 1], PigTracePCL2Ca[:, 0],
                     color='y', linewidth=lineWidthPig, label='Ca')
-axPigTracePCL3.plot(PigTraceTime, PigTracePCL3Vm[0:len(PigTraceTime)],
+axPigTracePCL3.plot(PigTracePCL3Vm[:, 1], PigTracePCL3Vm[:, 0],
                     color='r', linewidth=lineWidthPig, label='Vm')
-axPigTracePCL3.plot(PigTraceTime, PigTracePCL3Ca[0:len(PigTraceTime)],
+axPigTracePCL3.plot(PigTracePCL3Ca[:, 1], PigTracePCL3Ca[:, 0],
                     color='y', linewidth=lineWidthPig, label='Ca')
 
 
@@ -185,4 +192,5 @@ axPigTracePCL1.legend(legend_lines, ['Vm', 'Ca'],
                       ncol=1, prop={'size': 6}, labelspacing=1, numpoints=1, frameon=False)
 
 # plot_children(fig, fig._layoutbox, printit=False) # requires "constrained_layout=True"
+fig.savefig('RatAndPigTraces.svg', format='svg', dpi=fig.dpi)
 plt.show()
