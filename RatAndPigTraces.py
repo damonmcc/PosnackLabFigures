@@ -9,13 +9,14 @@ import matplotlib.font_manager as fm
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 
 # Layout of figure
-fig = plt.figure(figsize=(8.5, 5.5))
+fig = plt.figure()
+fig.set_size_inches(8.5, 5.5, forward=True)
 # Common plot values
 traceTickFontSize = 7
 titleFont = fm.FontProperties(size=8, weight='bold')
 scaleFont = fm.FontProperties(size=7, family='monospace')
 # Grid layout of entire figure: 1 row, 4 columns
-gs = fig.add_gridspec(1, 4)
+gs = fig.add_gridspec(1, 4, wspace=0.45)
 # Grid layout of each column
 gsRatImages = gs[0].subgridspec(2, 1)
 gsRatTraces = gs[1].subgridspec(3, 1, hspace=0.3)
@@ -38,12 +39,12 @@ axPigTracePCL3 = fig.add_subplot(gsPigTraces[2, 0])
 # Rat Images
 axRatImageVm.set_title('Rat, Vm', fontproperties=titleFont)
 RatImageVm = np.rot90(plt.imread('data/20180806-rata/Voltage/07-200_Vm_0001.tif'), k=3)
-RatNorm = colors.Normalize(vmin=RatImageVm.min(), vmax=RatImageVm.max()/2)
+RatNorm = colors.Normalize(vmin=RatImageVm.min(), vmax=RatImageVm.max()/2.5)
 axRatImageVm.imshow(RatImageVm, cmap='bone', norm=RatNorm)
 axRatImageVm.axis('off')
 axRatImageCa.set_title('Rat, Ca', fontproperties=titleFont)
 RatImageCa = np.rot90(plt.imread('data/20180806-rata/Calcium/07-200_Ca_0001.tif'), k=3)
-RatNorm = colors.Normalize(vmin=RatImageCa.min(), vmax=RatImageCa.max()/1.3)
+RatNorm = colors.Normalize(vmin=RatImageCa.min()/0.8, vmax=RatImageCa.max()/1.7)
 axRatImageCa.imshow(RatImageCa, cmap='bone', norm=RatNorm)
 axRatImageCa.axis('off')
 # Scale Bars
@@ -77,7 +78,7 @@ RatTracePCL3Vm = np.genfromtxt('data/20180806-rata/Voltage/22-220_Vm_x217y56r45.
 RatTracePCL3Ca = np.genfromtxt('data/20180806-rata/Calcium/22-220_Ca_x217y56r45.csv', delimiter=',')
 xLimitRat = [0, 0.8]
 yLimitRat = [0, 1]
-lineWidthRat = 0.4
+lineWidthRat = 0.9
 # Format figures
 for idk, ax in enumerate([axRatTracePCL1, axRatTracePCL2, axRatTracePCL3]):
     ax.tick_params(axis='x', labelsize=traceTickFontSize, which='both', direction='in')
@@ -114,12 +115,12 @@ axRatTracePCL3.plot(RatTracePCL3Ca[:, 1], RatTracePCL3Ca[:, 0],
 # Pig Images
 axPigImageVm.set_title('Pig, Vm', fontproperties=titleFont)
 PigImageVm = np.rot90(plt.imread('data/20181109-pigb/Voltage/12-300_Vm_0001.tif'))
-PigNorm = colors.Normalize(vmin=PigImageVm.min(), vmax=PigImageVm.max()/1.3)
+PigNorm = colors.Normalize(vmin=PigImageVm.min(), vmax=PigImageVm.max()/1.1)
 axPigImageVm.imshow(PigImageVm, cmap='bone', norm=PigNorm)
 axPigImageVm.axis('off')
 axPigImageCa.set_title('Pig, Ca', fontproperties=titleFont)
 PigImageCa = np.rot90(plt.imread('data/20181109-pigb/Calcium/12-300_Ca_0001.tif'))
-PigNorm = colors.Normalize(vmin=PigImageCa.min(), vmax=PigImageCa.max()/1.1)
+PigNorm = colors.Normalize(vmin=PigImageCa.min(), vmax=PigImageCa.max()/1)
 axPigImageCa.imshow(PigImageCa, cmap='bone', norm=PigNorm)
 axPigImageCa.axis('off')
 # Scale Bars
@@ -154,7 +155,7 @@ PigTracePCL3Ca = np.genfromtxt('data/20181109-pigb/Calcium/16-220_Ca_x253y150r80
 # PigTraceTime = np.loadtxt('data/20181109-pigb/Calcium/20-180_Ca_x253y150r80.csv', delimiter=',')
 xLimitPig = [0.2, 0.8]
 yLimitPig = [0, 1]
-lineWidthPig = 0.4
+lineWidthPig = 0.9
 # Format figures
 for idk, ax in enumerate([axPigTracePCL1, axPigTracePCL2, axPigTracePCL3]):
     ax.tick_params(axis='x', labelsize=traceTickFontSize, which='both', direction='in')
@@ -192,5 +193,5 @@ axPigTracePCL1.legend(legend_lines, ['Vm', 'Ca'],
                       ncol=1, prop={'size': 6}, labelspacing=1, numpoints=1, frameon=False)
 
 # plot_children(fig, fig._layoutbox, printit=False) # requires "constrained_layout=True"
-fig.savefig('RatAndPigTraces.svg', format='svg', dpi=fig.dpi)
 plt.show()
+fig.savefig('RatAndPigTraces.svg', format='svg', dpi=fig.dpi)
