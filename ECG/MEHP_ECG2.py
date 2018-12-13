@@ -43,13 +43,13 @@ for idk, ax in enumerate([axECGControl, axECGMEHP]):
     ax.set_yticklabels([])
     ax.set_xticklabels([])
     ax.tick_params(bottom=False, left=False)
-    # ax.xaxis.set_major_locator(ticker.MultipleLocator(50))
-    # ax.xaxis.set_minor_locator(ticker.MultipleLocator(10))
+    # ax.xaxis.set_major_locator(ticker.MultipleLocator(10))
+    # ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
     # # for label in ax.xaxis.get_ticklabels():
     # #     label.set_rotation(45)
     # ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))
     # ax.yaxis.set_minor_locator(ticker.MultipleLocator(0.25))
-
+    # ax.grid(True)
 
 # Control ECG trace
 axECGControl.set_ylabel('CTRL ECG', fontsize=14)
@@ -125,10 +125,14 @@ axECGMEHP.plot([MEHPQRS_Hash, MEHPQRS_Hash],
                [MEHPQRS_HashHeight - 0.1, MEHPQRS_HashHeight + 0.1],
                "k-", linewidth=1)
 # TODO: Draw scale L (voltage in mV and time in ms
-# RatImageScale = [196, 196]  # pixels/cm
-# RatImageScaleBarVm = AnchoredSizeBar(axRatImageVm.transData, RatImageScale[0], ' ', 'upper right',
-#                                      pad=0.2, color='w', frameon=False, fontproperties=scaleFont)
-
+ECGScaleTime = [20, 500/1000]  # 20 ms, 500 mV
+ECGScaleBarTime = AnchoredSizeBar(axECGMEHP.transData, ECGScaleTime[0], str(ECGScaleTime[0])+'ms',
+                                  'lower center', pad=0.2, color='b', frameon=False)
+ECGScaleBarVolt = AnchoredSizeBar(axECGMEHP.transData, 1, str(ECGScaleTime[1])+'mV',
+                                  'lower center', pad=0.2, color='b', frameon=False,
+                                  size_vertical=ECGScaleTime[1])
+axECGMEHP.add_artist(ECGScaleBarTime)
+axECGMEHP.add_artist(ECGScaleBarVolt)
 
 # ECG data/statistics for bar plots
 ecg = pandas.read_csv('data/PR_Data.csv')
