@@ -8,19 +8,21 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pandas
+from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
+
 # from scipy import stats
 
 
-fig = plt.figure(figsize=(11, 8))  # half 8.5 x 11 inch page.
+fig = plt.figure(figsize=(11, 7))  # half 8.5 x 11 inch page.
 baseColor = 'indianred'
 timeColor = 'midnightblue'
 
 gs0 = fig.add_gridspec(2, 3)  # Overall: Two rows, 3 columns
-gs1 = gs0[0].subgridspec(2, 1)  # 2 rows for ECG traces
+gs1 = gs0[0].subgridspec(2, 1, hspace=0.3)  # 2 rows for ECG traces
 axECGControl = fig.add_subplot(gs1[0])
 axECGMEHP = fig.add_subplot(gs1[1])
 
-
+# TODO: Get accurate values in ecgAuto
 # Control and MEHP ECG traces
 # axECGControl.text(-40, 96, 'A', ha='center', va='bottom', fontsize=16, fontweight='bold')
 # Skip header and import columns: times (ms), ECG (mV)
@@ -28,29 +30,104 @@ ECGControl = np.genfromtxt('data/20171024-ratb_PR _length.txt',
                            skip_header=28, usecols=(1, 2), skip_footer=2)
 ECGMEHP = np.genfromtxt('data/20171024-rata_PR_length.txt',
                         skip_header=27, usecols=(1, 2), skip_footer=2)
+ECGwindow = 250
 
 for idk, ax in enumerate([axECGControl, axECGMEHP]):
-    ax.tick_params(axis='x', labelsize=7, which='both', direction='in')
-    ax.tick_params(axis='y', labelsize=7, which='both', direction='in')
-    ax.spines['right'].set_visible(False)
-    ax.spines['top'].set_visible(False)
-    ax.xaxis.set_major_locator(ticker.MultipleLocator(50))
-    ax.xaxis.set_minor_locator(ticker.MultipleLocator(25))
-    ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))
-    ax.yaxis.set_minor_locator(ticker.MultipleLocator(0.25))
+    # ax.tick_params(axis='x', labelsize=7, which='both', direction='in')
+    # ax.tick_params(axis='y', labelsize=7, which='both', direction='in')
+    # ax.spines['right'].set_visible(False)
+    # ax.spines['left'].set_visible(False)
+    # ax.spines['top'].set_visible(False)
+    # ax.spines['bottom'].set_visible(False)
+    [s.set_visible(False) for s in ax.spines.values()]
+    ax.set_yticklabels([])
+    ax.set_xticklabels([])
+    ax.tick_params(bottom=False, left=False)
+    # ax.xaxis.set_major_locator(ticker.MultipleLocator(50))
+    # ax.xaxis.set_minor_locator(ticker.MultipleLocator(10))
+    # # for label in ax.xaxis.get_ticklabels():
+    # #     label.set_rotation(45)
+    # ax.yaxis.set_minor_locator(ticker.MultipleLocator(1))
+    # ax.yaxis.set_minor_locator(ticker.MultipleLocator(0.25))
 
-axECGControl.set_ylabel('CTRL', fontsize=14)
-axECGControl.set_ylim([-1, 1])
-axECGControl.set_xlim([150, 450])
+
+# Control ECG trace
+axECGControl.set_ylabel('CTRL ECG', fontsize=14)
+axECGControl.set_ylim([-2, 2])
+ECGControlStart = 180   # ms after 00:51:12.502
+axECGControl.set_xlim([ECGControlStart, ECGControlStart + ECGwindow])
+ECGControlMin = np.min(ECGControl[:, 1])
+# ECGControlAdjusted -= ECGControlMean
 axECGControl.plot(ECGControl[:, 0], ECGControl[:, 1],
-                  color=timeColor)
+                  color=timeColor, linewidth=2)
+# Draw lines to show PR and QRS lengths
+ECGCorrection = 10  # lines seems to be too far ahead of desired start times
+ControlPR_start = 265 - ECGCorrection   # 00:51:12.767
+ControlPR_width = 44
+ControlPR_end = ControlPR_start + ControlPR_width
+ControlPR_Hash = ControlPR_start, ControlPR_end
+ControlPR_HashHeight = 0.5
+axECGControl.text(ControlPR_start + ControlPR_width/2, ControlPR_HashHeight, str(ControlPR_width)+'ms',
+                  ha='center', va='bottom', fontsize=7, fontweight='bold')
+axECGControl.plot([ControlPR_start, ControlPR_end],
+                  [ControlPR_HashHeight, ControlPR_HashHeight],
+                  "k-", linewidth=1)
+axECGControl.plot([ControlPR_Hash, ControlPR_Hash],
+                  [ControlPR_HashHeight - 0.1, ControlPR_HashHeight + 0.1],
+                  "k-", linewidth=1)
+ControlQRS_start = ControlPR_end
+ControlQRS_width = 20
+ControlQRS_end = ControlQRS_start + ControlQRS_width
+ControlQRS_Hash = ControlQRS_start, ControlQRS_end
+ControlQRS_HashHeight = 1.85
+axECGControl.text(ControlQRS_start + ControlQRS_width/2, ControlQRS_HashHeight, str(ControlQRS_width)+'ms',
+                  ha='center', va='bottom', fontsize=7, fontweight='bold')
+axECGControl.plot([ControlQRS_start, ControlQRS_start + ControlQRS_width],
+                  [ControlQRS_HashHeight, ControlQRS_HashHeight],
+                  "k-", linewidth=1)
+axECGControl.plot([ControlQRS_Hash, ControlQRS_Hash],
+                  [ControlQRS_HashHeight - 0.1, ControlQRS_HashHeight + 0.1],
+                  "k-", linewidth=1)
 
-axECGMEHP.set_ylabel('MEHP', fontsize=14)
-axECGMEHP.set_xlabel('Time (ms)')
-axECGMEHP.set_ylim([-1, 1])
-axECGMEHP.set_xlim([50, 350])
+# MEHP ECG trace
+axECGMEHP.set_ylabel('MEHP ECG', fontsize=14)
+# axECGMEHP.set_xlabel('Time (ms)', fontsize=10)
+axECGMEHP.set_ylim([-2, 2])
+ECGMEHPStart = 50   # ms after 00:51:13.502
+axECGMEHP.set_xlim([ECGMEHPStart, ECGMEHPStart + ECGwindow])
 axECGMEHP.plot(ECGMEHP[:, 0], ECGMEHP[:, 1],
-               color=timeColor)
+               color=timeColor, linewidth=2)
+# Draw lines to show PR and QRS lengths
+MEHPPR_start = 114   # 00:51:12.589
+MEHPPR_width = 59
+MEHPPR_end = MEHPPR_start + MEHPPR_width
+MEHPPR_Hash = MEHPPR_start, MEHPPR_end
+MEHPPR_HashHeight = 0.5
+axECGMEHP.text(MEHPPR_start + MEHPPR_width/2, MEHPPR_HashHeight, str(MEHPPR_width)+'ms',
+                  ha='center', va='bottom', fontsize=7, fontweight='bold')
+axECGMEHP.plot([MEHPPR_start, MEHPPR_end],
+               [MEHPPR_HashHeight, MEHPPR_HashHeight],
+               "k-", linewidth=1)
+axECGMEHP.plot([MEHPPR_Hash, MEHPPR_Hash],
+               [MEHPPR_HashHeight - 0.1, MEHPPR_HashHeight + 0.1],
+               "k-", linewidth=1)
+MEHPQRS_start = MEHPPR_end
+MEHPQRS_width = 25  # 00:51:12.663
+MEHPQRS_end = MEHPQRS_start + MEHPQRS_width
+MEHPQRS_Hash = MEHPQRS_start, MEHPQRS_end
+MEHPQRS_HashHeight = 1.85
+axECGMEHP.text(MEHPQRS_start + MEHPQRS_width/2, MEHPQRS_HashHeight, str(MEHPQRS_width)+'ms',
+                  ha='center', va='bottom', fontsize=7, fontweight='bold')
+axECGMEHP.plot([MEHPQRS_start, MEHPQRS_start + MEHPQRS_width],
+               [MEHPQRS_HashHeight, MEHPQRS_HashHeight],
+               "k-", linewidth=1)
+axECGMEHP.plot([MEHPQRS_Hash, MEHPQRS_Hash],
+               [MEHPQRS_HashHeight - 0.1, MEHPQRS_HashHeight + 0.1],
+               "k-", linewidth=1)
+# TODO: Draw scale L (voltage in mV and time in ms
+# RatImageScale = [196, 196]  # pixels/cm
+# RatImageScaleBarVm = AnchoredSizeBar(axRatImageVm.transData, RatImageScale[0], ' ', 'upper right',
+#                                      pad=0.2, color='w', frameon=False, fontproperties=scaleFont)
 
 
 # ECG data/statistics for bar plots
@@ -182,8 +259,9 @@ yr = yl[1] - yl[0]
 xl = axPR.get_xlim()
 xr = xl[1] - xl[0]
 # axPR.text(xl[0] - (xr * 0.33), yr * 0.96, 'D', ha='center', va='bottom', fontsize=16, fontweight='bold')
-axPR.text(1.2, 76, '*', ha='center', va='center', fontsize=16)
+axPR.text(0.7, 71, '*', ha='center', va='center', fontsize=16)
 axPR.plot([0.7 - width / 2, 1.5 - width / 2], [68, 68], "k-", linewidth=2)
+axPR.text(1.2, 76, '*', ha='center', va='center', fontsize=16)
 axPR.plot([1.2 - width / 2, 1.5 - width / 2], [73, 73], "k-", linewidth=2)
 
 # QRS Plot
@@ -248,9 +326,3 @@ xr = xl[1] - xl[0]
 plt.tight_layout()
 plt.show()
 # plt.savefig('MEHP_ECG_wQRS.svg')
-
-
-
-
-
-
