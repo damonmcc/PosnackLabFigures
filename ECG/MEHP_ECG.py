@@ -52,7 +52,7 @@ for idk, ax in enumerate([axECGControl, axECGMEHP]):
     # ax.grid(True)
 
 # Control ECG trace
-axECGControl.set_ylabel('CTRL ECG', fontsize=14)
+axECGControl.set_ylabel('CTRL', fontsize=14)
 axECGControl.set_ylim([-2, 2])
 ECGControlStart = 180   # ms after 00:51:12.502
 axECGControl.set_xlim([ECGControlStart, ECGControlStart + ECGwindow])
@@ -90,7 +90,7 @@ axECGControl.plot([ControlQRS_Hash, ControlQRS_Hash],
                   "k-", linewidth=1)
 
 # MEHP ECG trace
-axECGMEHP.set_ylabel('MEHP ECG', fontsize=14)
+axECGMEHP.set_ylabel('MEHP', fontsize=14)
 # axECGMEHP.set_xlabel('Time (ms)', fontsize=10)
 axECGMEHP.set_ylim([-2, 2])
 ECGMEHPStart = 50   # ms after 00:51:13.502
@@ -117,7 +117,7 @@ MEHPQRS_end = MEHPQRS_start + MEHPQRS_width
 MEHPQRS_Hash = MEHPQRS_start, MEHPQRS_end
 MEHPQRS_HashHeight = 1.85
 axECGMEHP.text(MEHPQRS_start + MEHPQRS_width/2, MEHPQRS_HashHeight, str(MEHPQRS_width)+'ms',
-                  ha='center', va='bottom', fontsize=7, fontweight='bold')
+               ha='center', va='bottom', fontsize=7, fontweight='bold')
 axECGMEHP.plot([MEHPQRS_start, MEHPQRS_start + MEHPQRS_width],
                [MEHPQRS_HashHeight, MEHPQRS_HashHeight],
                "k-", linewidth=1)
@@ -126,13 +126,23 @@ axECGMEHP.plot([MEHPQRS_Hash, MEHPQRS_Hash],
                "k-", linewidth=1)
 # TODO: Draw scale L (voltage in mV and time in ms
 ECGScaleTime = [20, 500/1000]  # 20 ms, 500 mV
-ECGScaleBarTime = AnchoredSizeBar(axECGMEHP.transData, ECGScaleTime[0], str(ECGScaleTime[0])+'ms',
-                                  'lower center', pad=0.2, color='b', frameon=False)
-ECGScaleBarVolt = AnchoredSizeBar(axECGMEHP.transData, 1, str(ECGScaleTime[1])+'mV',
-                                  'lower center', pad=0.2, color='b', frameon=False,
-                                  size_vertical=ECGScaleTime[1])
-axECGMEHP.add_artist(ECGScaleBarTime)
-axECGMEHP.add_artist(ECGScaleBarVolt)
+ECGScaleOrigin = [axECGMEHP.get_xlim()[1] - 20, axECGMEHP.get_ylim()[0] + 0.3]
+ECGScaleOriginPad = [2, 0.2]
+# Time scale bar
+axECGMEHP.plot([ECGScaleOrigin[0], ECGScaleOrigin[0] + ECGScaleTime[0]],
+               [ECGScaleOrigin[1], ECGScaleOrigin[1]],
+               "k-", linewidth=1)
+axECGMEHP.text(ECGScaleOrigin[0], ECGScaleOrigin[1] - ECGScaleOriginPad[1],
+               str(ECGScaleTime[0])+'ms',
+               ha='left', va='top', fontsize=7, fontweight='bold')
+# Voltage scale bar
+axECGMEHP.plot([ECGScaleOrigin[0], ECGScaleOrigin[0]],
+               [ECGScaleOrigin[1], ECGScaleOrigin[1] + ECGScaleTime[1]],
+               "k-", linewidth=1)
+axECGMEHP.text(ECGScaleOrigin[0] - ECGScaleOriginPad[0], ECGScaleOrigin[1],
+               str(int(ECGScaleTime[1]*1000))+'mV',
+               ha='right', va='bottom', fontsize=7, fontweight='bold')
+
 
 # ECG data/statistics for bar plots
 ecg = pandas.read_csv('data/PR_Data.csv')
@@ -328,5 +338,5 @@ xr = xl[1] - xl[0]
 # ax.axis('off')
 
 plt.tight_layout()
-plt.show()
-# plt.savefig('MEHP_ECG_wQRS.svg')
+fig.show()
+fig.savefig('MEHP_ECG_wQRS.svg')
