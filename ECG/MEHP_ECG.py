@@ -5,7 +5,7 @@ import pandas as pandas
 # from scipy import stats
 
 
-fig = plt.figure(figsize=(11, 7))  # half 8.5 x 11 inch page.
+fig = plt.figure(figsize=(11, 7))  # half 11 x 7 inch page.
 baseColor = 'indianred'
 timeColor = 'midnightblue'
 

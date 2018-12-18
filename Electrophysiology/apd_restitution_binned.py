@@ -15,7 +15,7 @@ from scipy.interpolate import interp1d
 from matplotlib import rcParams
 rcParams.update({'figure.autolayout': True})
 
-data= np.loadtxt('APD_binned2.csv',delimiter=',',skiprows=1)
+data= np.loadtxt('data/APD_binned2.csv',delimiter=',',skiprows=1)
 
 bcl=data[:,0]
 c_mean=data[:,1]
@@ -51,3 +51,4 @@ dehp_legend = mlines.Line2D([], [], color='midnightblue',ls='dotted', marker='s'
 plt.legend(handles=[ctrl_legend, dehp_legend],loc='upper left',numpoints=1, fontsize=16)
 
 #fig.savefig('APD.png', dpi=300)
+fig.show()

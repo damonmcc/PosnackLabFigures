@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 import pandas as pandas
 import scipy.io as spio
 
-oaps = pandas.read_csv('APD30_90_up90_MEHP_Reform2.csv')
+oaps = pandas.read_csv('data/APD30_90_up90_MEHP_Reform2.csv')
 baseColor='indianred'
 timeColor='midnightblue'
 
@@ -50,17 +50,17 @@ mb240_apdtri=oaps.APDtri_240[(oaps.group == 'mehp') & (oaps.context == 'base')]
 mp240_apdtri=oaps.APDtri_240[(oaps.group == 'mehp') & (oaps.context == 'post')]
 
 # Example Action Potentials
-cp240vm=np.genfromtxt('ap_examples/20161221-ratb-04-pcl240-vm.csv', delimiter=',')
-cp240t=np.genfromtxt('ap_examples/20161221-ratb-04-pcl240-t.csv', delimiter=',')
+cp240vm=np.genfromtxt('data/ap_examples/20161221-ratb-04-pcl240-vm.csv', delimiter=',')
+cp240t=np.genfromtxt('data/ap_examples/20161221-ratb-04-pcl240-t.csv', delimiter=',')
 
-cp140vm=np.genfromtxt('ap_examples/20161221-rata-12-pcl140-ctrl-vm.csv', delimiter=',')
-cp140t=np.genfromtxt('ap_examples/20161221-rata-12-pcl140-ctrl-t.csv', delimiter=',')
+cp140vm=np.genfromtxt('data/ap_examples/20161221-rata-12-pcl140-ctrl-vm.csv', delimiter=',')
+cp140t=np.genfromtxt('data/ap_examples/20161221-rata-12-pcl140-ctrl-t.csv', delimiter=',')
 
-mp240vm=np.genfromtxt('ap_examples/20180720-rata-27-pcl240-vm.csv', delimiter=',')
-mp240t=np.genfromtxt('ap_examples/20180720-rata-27-pcl240-t.csv', delimiter=',')
+mp240vm=np.genfromtxt('data/ap_examples/20180720-rata-27-pcl240-vm.csv', delimiter=',')
+mp240t=np.genfromtxt('data/ap_examples/20180720-rata-27-pcl240-t.csv', delimiter=',')
 
-mp140vm=np.genfromtxt('ap_examples/20161222-ratb-13-pcl140-mehp-vm.csv', delimiter=',')
-mp140t=np.genfromtxt('ap_examples/20161222-ratb-13-pcl140-mehp-t.csv', delimiter=',')
+mp140vm=np.genfromtxt('data/ap_examples/20161222-ratb-13-pcl140-mehp-vm.csv', delimiter=',')
+mp140t=np.genfromtxt('data/ap_examples/20161222-ratb-13-pcl140-mehp-t.csv', delimiter=',')
 
 plt.rc('xtick', labelsize=12) 
 plt.rc('ytick', labelsize=12)
@@ -261,3 +261,4 @@ plt.rcParams.update({'font.size': 12})
 plt.tight_layout(pad=0.2, w_pad=0.5, h_pad=2)
 #plt.savefig('MEHP_OAPS_APD.png', dpi=300)
 #plt.savefig('MEHP_OAPS_APD.pdf')
+fig.show()
