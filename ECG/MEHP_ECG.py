@@ -1,15 +1,7 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Wed Jul 11 11:24:59 2018
-@author: Rafael Jaimes III, PhD
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pandas
-from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
-
 # from scipy import stats
 
 
@@ -22,7 +14,6 @@ gs1 = gs0[0].subgridspec(2, 1, hspace=0.3)  # 2 rows for ECG traces
 axECGControl = fig.add_subplot(gs1[0])
 axECGMEHP = fig.add_subplot(gs1[1])
 
-# TODO: Get accurate values in ecgAuto
 # Control and MEHP ECG traces
 # axECGControl.text(-40, 96, 'A', ha='center', va='bottom', fontsize=16, fontweight='bold')
 # Skip header and import columns: times (ms), ECG (mV)
@@ -91,7 +82,6 @@ axECGControl.plot([ControlQRS_Hash, ControlQRS_Hash],
 
 # MEHP ECG trace
 axECGMEHP.set_ylabel('MEHP', fontsize=14)
-# axECGMEHP.set_xlabel('Time (ms)', fontsize=10)
 axECGMEHP.set_ylim([-2, 2])
 ECGMEHPStart = 50   # ms after 00:51:13.502
 axECGMEHP.set_xlim([ECGMEHPStart, ECGMEHPStart + ECGwindow])
@@ -124,7 +114,7 @@ axECGMEHP.plot([MEHPQRS_start, MEHPQRS_start + MEHPQRS_width],
 axECGMEHP.plot([MEHPQRS_Hash, MEHPQRS_Hash],
                [MEHPQRS_HashHeight - 0.1, MEHPQRS_HashHeight + 0.1],
                "k-", linewidth=1)
-# TODO: Draw scale L (voltage in mV and time in ms
+# ECG Scale: mv and ms bars forming an L
 ECGScaleTime = [20, 500/1000]  # 20 ms, 500 mV
 ECGScaleOrigin = [axECGMEHP.get_xlim()[1] - 20, axECGMEHP.get_ylim()[0] + 0.3]
 ECGScaleOriginPad = [2, 0.2]
@@ -273,7 +263,7 @@ yr = yl[1] - yl[0]
 xl = axPR.get_xlim()
 xr = xl[1] - xl[0]
 # axPR.text(xl[0] - (xr * 0.33), yr * 0.96, 'D', ha='center', va='bottom', fontsize=16, fontweight='bold')
-axPR.text(0.7, 71, '*', ha='center', va='center', fontsize=16)
+# axPR.text(0.7, 71, '*', ha='center', va='center', fontsize=16)
 axPR.plot([0.7 - width / 2, 1.5 - width / 2], [68, 68], "k-", linewidth=2)
 axPR.text(1.2, 76, '*', ha='center', va='center', fontsize=16)
 axPR.plot([1.2 - width / 2, 1.5 - width / 2], [73, 73], "k-", linewidth=2)
@@ -337,6 +327,11 @@ xr = xl[1] - xl[0]
 # ax = plt.imshow(img)
 # ax.axis('off')
 
-plt.tight_layout()
+# plt.tight_layout()
+# DEFAULTS:
+# plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.2, hspace=0.2)
+# CUSTOM:
+plt.subplots_adjust(left=0.125, right=0.9, bottom=0.1, top=0.9, wspace=0.7, hspace=0.5)
+
 fig.show()
 fig.savefig('MEHP_ECG_wQRS.svg')
