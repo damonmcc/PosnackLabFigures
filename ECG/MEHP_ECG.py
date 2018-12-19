@@ -23,7 +23,7 @@ ECGMEHP = np.genfromtxt('data/20171024-rata_PR_length.txt',
                         skip_header=27, usecols=(1, 2), skip_footer=2)
 ECGwindow = 250
 
-for idk, ax in enumerate([axECGControl, axECGMEHP]):
+for idx, ax in enumerate([axECGControl, axECGMEHP]):
     # ax.tick_params(axis='x', labelsize=7, which='both', direction='in')
     # ax.tick_params(axis='y', labelsize=7, which='both', direction='in')
     # ax.spines['right'].set_visible(False)
