@@ -13,7 +13,7 @@ def example_plot(axis):
     axis.set_title('Title', fontsize=14)
 
 
-fig = plt.figure(figsize=(11, 7))  # half 11 x 7 inch page.
+fig = plt.figure(figsize=(11, 6))  # half 11 x 7 inch page
 gs0 = fig.add_gridspec(1, 2, width_ratios=[0.3, 0.7])  # Overall: 1 row, 2 columns
 gs1 = gs0[0].subgridspec(2, 1, hspace=0.3)  # 2 rows for APD80 and VERP Before-After plots
 gsBeforeAfter = gs1[1].subgridspec(1, 2, width_ratios=[0.5, 0.5], wspace=0.1)  # 2 columns for VERP Before-After plots
@@ -320,4 +320,4 @@ axAPDtri_140.legend(handles=[APDbase_legend, APDpost_legend],
 #     example_plot(ax)
 
 fig.show()
-fig.savefig('EP.svg')
+fig.savefig('MEHP_EP.svg')
