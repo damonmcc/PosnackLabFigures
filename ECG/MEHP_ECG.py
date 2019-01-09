@@ -2,6 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import pandas as pandas
+
 # from scipy import stats
 
 
@@ -45,7 +46,7 @@ for idx, ax in enumerate([axECGControl, axECGMEHP]):
 # Control ECG trace
 axECGControl.set_ylabel('CTRL', fontsize=14)
 axECGControl.set_ylim([-2, 2])
-ECGControlStart = 180   # ms after 00:51:12.502
+ECGControlStart = 180  # ms after 00:51:12.502
 axECGControl.set_xlim([ECGControlStart, ECGControlStart + ECGwindow])
 ECGControlMin = np.min(ECGControl[:, 1])
 # ECGControlAdjusted -= ECGControlMean
@@ -53,12 +54,12 @@ axECGControl.plot(ECGControl[:, 0], ECGControl[:, 1],
                   color=timeColor, linewidth=2)
 # Draw lines to show PR and QRS lengths
 ECGCorrection = 10  # lines seems to be too far ahead of desired start times
-ControlPR_start = 265 - ECGCorrection   # 00:51:12.767
+ControlPR_start = 265 - ECGCorrection  # 00:51:12.767
 ControlPR_width = 44
 ControlPR_end = ControlPR_start + ControlPR_width
 ControlPR_Hash = ControlPR_start, ControlPR_end
 ControlPR_HashHeight = 0.5
-axECGControl.text(ControlPR_start + ControlPR_width/2, ControlPR_HashHeight, str(ControlPR_width)+'ms',
+axECGControl.text(ControlPR_start + ControlPR_width / 2, ControlPR_HashHeight, str(ControlPR_width) + 'ms',
                   ha='center', va='bottom', fontsize=7, fontweight='bold')
 axECGControl.plot([ControlPR_start, ControlPR_end],
                   [ControlPR_HashHeight, ControlPR_HashHeight],
@@ -71,7 +72,7 @@ ControlQRS_width = 20
 ControlQRS_end = ControlQRS_start + ControlQRS_width
 ControlQRS_Hash = ControlQRS_start, ControlQRS_end
 ControlQRS_HashHeight = 1.85
-axECGControl.text(ControlQRS_start + ControlQRS_width/2, ControlQRS_HashHeight, str(ControlQRS_width)+'ms',
+axECGControl.text(ControlQRS_start + ControlQRS_width / 2, ControlQRS_HashHeight, str(ControlQRS_width) + 'ms',
                   ha='center', va='bottom', fontsize=7, fontweight='bold')
 axECGControl.plot([ControlQRS_start, ControlQRS_start + ControlQRS_width],
                   [ControlQRS_HashHeight, ControlQRS_HashHeight],
@@ -83,18 +84,18 @@ axECGControl.plot([ControlQRS_Hash, ControlQRS_Hash],
 # MEHP ECG trace
 axECGMEHP.set_ylabel('MEHP', fontsize=14)
 axECGMEHP.set_ylim([-2, 2])
-ECGMEHPStart = 50   # ms after 00:51:13.502
+ECGMEHPStart = 50  # ms after 00:51:13.502
 axECGMEHP.set_xlim([ECGMEHPStart, ECGMEHPStart + ECGwindow])
 axECGMEHP.plot(ECGMEHP[:, 0], ECGMEHP[:, 1],
                color=timeColor, linewidth=2)
 # Draw lines to show PR and QRS lengths
-MEHPPR_start = 114   # 00:51:12.589
+MEHPPR_start = 114  # 00:51:12.589
 MEHPPR_width = 59
 MEHPPR_end = MEHPPR_start + MEHPPR_width
 MEHPPR_Hash = MEHPPR_start, MEHPPR_end
 MEHPPR_HashHeight = 0.5
-axECGMEHP.text(MEHPPR_start + MEHPPR_width/2, MEHPPR_HashHeight, str(MEHPPR_width)+'ms',
-                  ha='center', va='bottom', fontsize=7, fontweight='bold')
+axECGMEHP.text(MEHPPR_start + MEHPPR_width / 2, MEHPPR_HashHeight, str(MEHPPR_width) + 'ms',
+               ha='center', va='bottom', fontsize=7, fontweight='bold')
 axECGMEHP.plot([MEHPPR_start, MEHPPR_end],
                [MEHPPR_HashHeight, MEHPPR_HashHeight],
                "k-", linewidth=1)
@@ -106,7 +107,7 @@ MEHPQRS_width = 25  # 00:51:12.663
 MEHPQRS_end = MEHPQRS_start + MEHPQRS_width
 MEHPQRS_Hash = MEHPQRS_start, MEHPQRS_end
 MEHPQRS_HashHeight = 1.85
-axECGMEHP.text(MEHPQRS_start + MEHPQRS_width/2, MEHPQRS_HashHeight, str(MEHPQRS_width)+'ms',
+axECGMEHP.text(MEHPQRS_start + MEHPQRS_width / 2, MEHPQRS_HashHeight, str(MEHPQRS_width) + 'ms',
                ha='center', va='bottom', fontsize=7, fontweight='bold')
 axECGMEHP.plot([MEHPQRS_start, MEHPQRS_start + MEHPQRS_width],
                [MEHPQRS_HashHeight, MEHPQRS_HashHeight],
@@ -115,7 +116,7 @@ axECGMEHP.plot([MEHPQRS_Hash, MEHPQRS_Hash],
                [MEHPQRS_HashHeight - 0.1, MEHPQRS_HashHeight + 0.1],
                "k-", linewidth=1)
 # ECG Scale: mv and ms bars forming an L
-ECGScaleTime = [20, 500/1000]  # 20 ms, 500 mV
+ECGScaleTime = [20, 500 / 1000]  # 20 ms, 500 mV
 ECGScaleOrigin = [axECGMEHP.get_xlim()[1] - 20, axECGMEHP.get_ylim()[0] + 0.3]
 ECGScaleOriginPad = [2, 0.2]
 # Time scale bar
@@ -123,16 +124,15 @@ axECGMEHP.plot([ECGScaleOrigin[0], ECGScaleOrigin[0] + ECGScaleTime[0]],
                [ECGScaleOrigin[1], ECGScaleOrigin[1]],
                "k-", linewidth=1)
 axECGMEHP.text(ECGScaleOrigin[0], ECGScaleOrigin[1] - ECGScaleOriginPad[1],
-               str(ECGScaleTime[0])+'ms',
+               str(ECGScaleTime[0]) + 'ms',
                ha='left', va='top', fontsize=7, fontweight='bold')
 # Voltage scale bar
 axECGMEHP.plot([ECGScaleOrigin[0], ECGScaleOrigin[0]],
                [ECGScaleOrigin[1], ECGScaleOrigin[1] + ECGScaleTime[1]],
                "k-", linewidth=1)
 axECGMEHP.text(ECGScaleOrigin[0] - ECGScaleOriginPad[0], ECGScaleOrigin[1],
-               str(int(ECGScaleTime[1]*1000))+'mV',
+               str(int(ECGScaleTime[1] * 1000)) + 'mV',
                ha='right', va='bottom', fontsize=7, fontweight='bold')
-
 
 # ECG data/statistics for bar plots
 ecg = pandas.read_csv('data/PR_Data.csv')
