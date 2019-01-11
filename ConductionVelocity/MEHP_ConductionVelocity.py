@@ -1,5 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 import matplotlib.lines as mlines
 import pandas as pd
 from scipy import stats
@@ -37,7 +38,15 @@ VmtMEHP_post140 = 1000 * np.genfromtxt('data/Signals/Signal-20180522-rata-38x71y
 
 ConDelayMEHP_base140 = np.genfromtxt('data/Signals/15-140_Vm_x128y161r20.csv', delimiter=',')
 ConDelayMEHP_post140 = np.genfromtxt('data/Signals/38-140_Vm_x128y161r20.csv', delimiter=',')
-
+for val in actMapsCTRL.values():
+    print(val)
+for val in actMapsMEHPbase.values():
+    print(val)
+for val in actMapsMEHPpost.values():
+    print(val)
+print(max(actMapsMEHPbase.iterkeys(), key=(lambda key: stats[key])))
+# jet_norm = colors.Normalize(vmin=0, vmax=max(actMapsCTRL.values(), actMapsMEHPbase.values(),
+#                                              actMapsMEHPpost.values()))
 
 def example_plot(axis):
     axis.plot([1, 2])
@@ -106,14 +115,14 @@ def example_ConductionDelay2(axis, dataBase, dataPost):
               color=colorBase, linewidth=2, label='Base')
     axis.plot(timesPost, np.roll(dataPost[:, 0], shiftX + shiftPost),
               color=colorPost, linewidth=2, label='Post')
-    axis.legend(loc='upper right', ncol=1,
+    axis.legend(loc='upper left', ncol=1,
                 prop={'size': 8}, numpoints=1, frameon=False)
 
 
 fig = plt.figure(figsize=(8, 8))  # _ x _ inch page
 gs0 = fig.add_gridspec(2, 2, height_ratios=[0.8, 0.2])  # Overall: ? row, ? columns
 gsActMaps = gs0[0].subgridspec(3, 2, hspace=0.3)  # 3 rows, 2 columns for Activation Maps
-gsConDealys = gs0[1].subgridspec(2, 2, hspace=0.3)  # 2 rows, 2 columns for Conduction Delays
+gsConDealys = gs0[1].subgridspec(3, 2, hspace=0.3)  # 3 rows, 2 columns for Conduction Delays
 
 # Build Activation Map plots
 ActMapTitleX = 0.1

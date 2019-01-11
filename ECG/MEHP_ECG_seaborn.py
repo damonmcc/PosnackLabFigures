@@ -4,6 +4,7 @@ from matplotlib import ticker
 import numpy as np
 import pandas as pd
 import datetime as dt
+from scipy import stats
 import warnings
 warnings.filterwarnings('ignore')
 sns.set(style="white", color_codes=True)
@@ -76,4 +77,6 @@ for n in range(6):
     ax = fig.add_subplot(gsQRS[n])
     plot_example(ax)
 
+print(stats.ttest_ind(hrv.SDNN[(hrv.group == 'mehp') & (hrv.context == 'post')],
+                      hrv.SDNN[(hrv.group == 'ctrl') & (hrv.context == 'post')], axis=0))
 fig.show()
