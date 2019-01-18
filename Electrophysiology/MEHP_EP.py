@@ -68,6 +68,7 @@ VERPmehpBASE = VERPData.base[(VERPData.group == 'mehp')]
 VERPmehpPOST = VERPData.post[(VERPData.group == 'mehp')]
 VERPmehp = [VERPmehpBASE, VERPmehpPOST]
 # Plotting
+# TODO add plot title
 for idx, axis in enumerate([axVERPctrl, axVERPmhep]):
     axis.set_xlim([0.8, 2.2])
     # axis.margins(0.8, 2.2)
@@ -163,20 +164,20 @@ for idx, axis in enumerate([axVm_140, axVm_240]):
     axis.spines['top'].set_visible(False)
     axis.set_ylabel('Vm (Normalized)', fontsize=12)
 axVm_140.plot(VmtCTRL_post140, np.roll(VmCTRL_post140, 78),
-              color=colorPost, linewidth=2, label='Ctrl')
+              color=colorCTRL, linewidth=2, label='Ctrl')
 axVm_140.plot(VmtMEHP_post140, np.roll(VmMEHP_post140, 49) + 0.03,
-              color=colorPost, linewidth=2, linestyle='--', label='MEHP')
+              color=colorMEHP, linewidth=2, linestyle='--', label='MEHP')
 axVm_240.plot(VmtCTRL_post240, np.roll(VmCTRL_post240, 78),
-              color=colorPost, linewidth=2, label='Ctrl')
+              color=colorCTRL, linewidth=2, label='Ctrl')
 axVm_240.plot(VmtMEHP_post240, np.roll(VmMEHP_post240, 49) + 0.03,
-              color=colorPost, linewidth=2, linestyle='--', label='MEHP')
+              color=colorMEHP, linewidth=2, linestyle='--', label='MEHP')
 # Legend
 VmCTRL_legend = mlines.Line2D([], [], color=colorMEHP, ls='dotted', marker='s',
                               markersize=8, label='Ctrl')
 VmMEHP_legend = mlines.Line2D([], [], color=colorMEHP, ls='dotted', marker='s',
                               markersize=8, label='MEHP')
-axVm_140.legend(handles=[VmCTRL_legend, VmMEHP_legend], loc='upper left', ncol=1,
-                prop={'size': 10}, numpoints=1, frameon=False)
+axVm_140.legend(loc='upper left', ncol=1,
+                prop={'size': 8}, numpoints=1, frameon=False)
 # APD30 plots
 barWidth = 0.28
 barGap = 0.02
@@ -310,7 +311,7 @@ APDpost_legend = mlines.Line2D([], [], color=colorPost, ls='solid',
                                linewidth=6, label='30 min')
 axAPDtri_140.legend(handles=[APDbase_legend, APDpost_legend],
                     loc='upper left', ncol=1,
-                    prop={'size': 10}, numpoints=1, frameon=False)
+                    prop={'size': 8}, numpoints=1, frameon=False)
 
 # for n in range(4):
 #     ax = fig.add_subplot(gsAPD1[n])

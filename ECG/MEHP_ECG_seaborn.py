@@ -8,9 +8,9 @@ from scipy import stats
 import warnings
 warnings.filterwarnings('ignore')
 sns.set(style="white", color_codes=True)
-exposure_colors = ['black', 'red']
+exposure_colors = ['0.8', '0.45']
 exposure_pal = sns.color_palette(exposure_colors)
-context_colors = ['0.8', '0.45']
+context_colors = ['indianred', '#19196e']
 context_pal = sns.color_palette(context_colors)
 
 
@@ -65,7 +65,6 @@ axHR_HRBox = fig.add_subplot(gsHR[1])
 axHR_HRV = fig.add_subplot(gsHR[2])
 axHR_HRVBox = fig.add_subplot(gsHR[3])
 # Load data
-tips = sns.load_dataset('tips')
 hrv = pd.read_csv('data/ecg_hrv.csv')
 t0 = dt.datetime(1900, 1, 1)
 # Plot data
