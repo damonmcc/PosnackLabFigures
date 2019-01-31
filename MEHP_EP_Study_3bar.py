@@ -63,8 +63,8 @@ axECGMEHP = fig.add_subplot(gs0[1])
 axSNRT = fig.add_subplot(gs1[0])
 axWBCL = fig.add_subplot(gs1[1])
 axAVNERP = fig.add_subplot(gs1[2])
-baseColor = 'indianred'
-timeColor = 'midnightblue'
+bC = 'indianred' #control color or baseline color
+tC = 'midnightblue' #treatment color or time color
 #%% Control and MEHP ECG traces
 # axECGControl.text(-40, 96, 'A', ha='center', va='bottom', fontsize=16, fontweight='bold')
 ECGwindow = 2.5
@@ -195,12 +195,12 @@ width=0.28
 labels = ['Ctrl', 'MEHP']
 
 # SNRT
-axSNRT.bar(0.4, np.mean(cp_snrt), width, color='k',fill=False, yerr=np.std(cp_snrt) / np.sqrt(len(cp_snrt)),
-          ecolor='k', error_kw=dict(lw=1, capsize=4, capthick=1.0))
-axSNRT.bar(0.7, np.mean(mp_snrt), width, edgecolor='r', color='r', fill=False, yerr=np.std(mp_snrt) / np.sqrt(len(mp_snrt)),
-          ecolor='r', error_kw=dict(lw=1, capsize=4, capthick=1.0))
-axSNRT.plot(np.linspace(0.35,0.45, num=len(cp_snrt)),cp_snrt, 'o', color='k', mfc='none')
-axSNRT.plot(np.linspace(0.65,0.75, num=len(mp_snrt)),mp_snrt, 'o', color='r', mfc='none')
+axSNRT.bar(0.4, np.mean(cp_snrt), width, edgecolor=bC, fill=False, yerr=np.std(cp_snrt) / np.sqrt(len(cp_snrt)),
+          ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+axSNRT.bar(0.7, np.mean(mp_snrt), width, edgecolor=tC, color=tC, fill=False, yerr=np.std(mp_snrt) / np.sqrt(len(mp_snrt)),
+          ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+axSNRT.plot(np.linspace(0.35,0.45, num=len(cp_snrt)),cp_snrt, 'o', color=bC, mfc='none')
+axSNRT.plot(np.linspace(0.65,0.75, num=len(mp_snrt)),mp_snrt, 'o', color=tC, mfc='none')
 axSNRT.set_ylim(bottom=0, top=602)
 axSNRT.set_xlim(left=0.2, right=0.9)
 axSNRT.spines['right'].set_visible(False)
@@ -219,12 +219,12 @@ xr = xl[1] - xl[0]
 axSNRT.text(xl[0] - (xr * 0.5), yr * 0.96, 'C', ha='center', va='bottom', fontsize=10, fontweight='bold')
 
 # WBCL
-axWBCL.bar(0.4, np.mean(cp_wbcl), width, color='k', fill=False, yerr=np.std(cp_wbcl) / np.sqrt(len(cp_wbcl)),
-          ecolor='k', error_kw=dict(lw=1, capsize=4, capthick=1.0))
-axWBCL.bar(0.7, np.mean(mp_wbcl), width, edgecolor='r',fill=False, yerr=np.std(mp_wbcl) / np.sqrt(len(mp_wbcl)),
-          ecolor='r', error_kw=dict(lw=1, capsize=4, capthick=1.0))
-axWBCL.plot(np.linspace(0.35,0.45, num=len(cp_wbcl)),cp_wbcl, 'o', color='k', mfc='none')
-axWBCL.plot(np.linspace(0.65,0.75, num=len(mp_wbcl)),mp_wbcl, 'o', color='r', mfc='none')
+axWBCL.bar(0.4, np.mean(cp_wbcl), width, edgecolor=bC, fill=False, yerr=np.std(cp_wbcl) / np.sqrt(len(cp_wbcl)),
+          ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+axWBCL.bar(0.7, np.mean(mp_wbcl), width, edgecolor=tC,fill=False, yerr=np.std(mp_wbcl) / np.sqrt(len(mp_wbcl)),
+          ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+axWBCL.plot(np.linspace(0.35,0.45, num=len(cp_wbcl)),cp_wbcl, 'o', color=bC, mfc='none')
+axWBCL.plot(np.linspace(0.65,0.75, num=len(mp_wbcl)),mp_wbcl, 'o', color=tC, mfc='none')
 axWBCL.set_ylim(bottom=0, top=250)
 axWBCL.set_xlim(left=0.2, right=0.9)
 axWBCL.spines['right'].set_visible(False)
@@ -243,12 +243,12 @@ xr = xl[1] - xl[0]
 axWBCL.text(xl[0] - (xr * 0.5), yr * 0.96, 'D', ha='center', va='bottom', fontsize=10, fontweight='bold')
 
 # AVNERP
-axAVNERP.bar(0.4, np.mean(cp_avnerp), width, color='k', fill=False, yerr=np.std(cp_avnerp) / np.sqrt(len(cp_avnerp)),
-          ecolor='k', error_kw=dict(lw=1, capsize=4, capthick=1.0))
-axAVNERP.bar(0.7, np.mean(mp_avnerp), width, edgecolor='r', color='r', fill=False, yerr=np.std(mp_avnerp) / np.sqrt(len(mp_avnerp)),
-          ecolor='r', error_kw=dict(lw=1, capsize=4, capthick=1.0))
-axAVNERP.plot(np.linspace(0.35,0.45, num=len(cp_avnerp)),cp_avnerp, 'o', color='k', mfc='none')
-axAVNERP.plot(np.linspace(0.65,0.75, num=len(mp_avnerp)),mp_avnerp, 'o', color='r', mfc='none')
+axAVNERP.bar(0.4, np.mean(cp_avnerp), width, edgecolor=bC, fill=False, yerr=np.std(cp_avnerp) / np.sqrt(len(cp_avnerp)),
+          ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+axAVNERP.bar(0.7, np.mean(mp_avnerp), width, edgecolor=tC, color='b', fill=False, yerr=np.std(mp_avnerp) / np.sqrt(len(mp_avnerp)),
+          ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+axAVNERP.plot(np.linspace(0.35,0.45, num=len(cp_avnerp)),cp_avnerp, 'o', color=bC, mfc='none')
+axAVNERP.plot(np.linspace(0.65,0.75, num=len(mp_avnerp)),mp_avnerp, 'o', color=tC, mfc='none')
 axAVNERP.set_ylim(bottom=0, top=250)
 axAVNERP.set_xlim(left=0.2, right=0.9)
 axAVNERP.spines['right'].set_visible(False)
