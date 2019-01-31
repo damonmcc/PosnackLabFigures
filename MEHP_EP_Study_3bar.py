@@ -65,6 +65,7 @@ axWBCL = fig.add_subplot(gs1[1])
 axAVNERP = fig.add_subplot(gs1[2])
 bC = 'indianred' #control color or baseline color
 tC = 'midnightblue' #treatment color or time color
+bC = tC # both are timed
 #%% Control and MEHP ECG traces
 # axECGControl.text(-40, 96, 'A', ha='center', va='bottom', fontsize=16, fontweight='bold')
 ECGwindow = 2.5
@@ -89,14 +90,14 @@ for idx, ax in enumerate([axECGControl, axECGMEHP]):
     # ax.grid(True)
 
 # Control ECG trace
-axECGControl.set_ylabel('Ctrl', fontsize=9)
+axECGControl.set_ylabel('Ctrl', fontsize=12)
 axECGControl.set_ylim([-1.5, 1.5])
 ECGControlStart = 0.72  # ms after 00:51:12.502
 axECGControl.set_xlim([ECGControlStart, ECGControlStart + ECGwindow])
 ECGControlMin = np.min(ECGControl[:, 1])
 # ECGControlAdjusted -= ECGControlMean
 axECGControl.plot(ECGControl[:, 0], ECGControl[:, 1],
-                  color=timeColor, linewidth=2)
+                  color=bC, linewidth=1.5)
 # =============================================================================
 # # Draw lines to show PR and QRS lengths
 # ECGCorrection = 10  # lines seems to be too far ahead of desired start times
@@ -126,20 +127,20 @@ axECGControl.plot(ECGControl[:, 0], ECGControl[:, 1],
 # axECGControl.plot([ControlQRS_Hash, ControlQRS_Hash],
 #                   [ControlQRS_HashHeight - 0.1, ControlQRS_HashHeight + 0.1],
 #                   "k-", linewidth=1)
-# yl = axECGControl.get_ylim()
-# yr = yl[1] - yl[0]
-# xl = axECGControl.get_xlim()
-# xr = xl[1] - xl[0]
-# axECGControl.text(xl[0] - (xr * 0.4), yr * 0.5, 'A', ha='center', va='bottom', fontsize=9, fontweight='bold')
-# 
 # =============================================================================
+yl = axECGControl.get_ylim()
+yr = yl[1] - yl[0]
+xl = axECGControl.get_xlim()
+xr = xl[1] - xl[0]
+axECGControl.text(xl[0] - (xr * 0.07), yr * 0.2, 'A', ha='center', va='bottom', fontsize=12, fontweight='bold')
+
 # MEHP ECG trace
-axECGMEHP.set_ylabel('MEHP', fontsize=9)
+axECGMEHP.set_ylabel('MEHP', fontsize=12)
 axECGMEHP.set_ylim([-0.5, 0.5])
 ECGMEHPStart = 0.8  # ms after 00:51:13.502
 axECGMEHP.set_xlim([ECGMEHPStart, ECGMEHPStart + ECGwindow])
 axECGMEHP.plot(ECGMEHP[:, 0], ECGMEHP[:, 1],
-               color=timeColor, linewidth=2)
+               color=tC, linewidth=1.5)
 # Draw lines to show PR and QRS lengths
 # =============================================================================
 # MEHPPR_start = 114  # 00:51:12.589
@@ -190,6 +191,11 @@ axECGMEHP.plot(ECGMEHP[:, 0], ECGMEHP[:, 1],
 #                str(int(ECGScaleTime[1] * 1000)) + 'mV',
 #                ha='right', va='bottom', fontsize=7, fontweight='bold')
 # =============================================================================
+yl = axECGMEHP.get_ylim()
+yr = yl[1] - yl[0]
+xl = axECGMEHP.get_xlim()
+xr = xl[1] - xl[0]
+axECGMEHP.text(xl[0] - (xr * 0.07), yr * 0.2, 'B', ha='center', va='bottom', fontsize=12, fontweight='bold')
 #%% Bar Plots
 width=0.28
 labels = ['Ctrl', 'MEHP']
@@ -216,7 +222,7 @@ yl = axSNRT.get_ylim()
 yr = yl[1] - yl[0]
 xl = axSNRT.get_xlim()
 xr = xl[1] - xl[0]
-axSNRT.text(xl[0] - (xr * 0.5), yr * 0.96, 'C', ha='center', va='bottom', fontsize=10, fontweight='bold')
+axSNRT.text(xl[0] - (xr * 0.5), yr * 0.96, 'C', ha='center', va='bottom', fontsize=12, fontweight='bold')
 
 # WBCL
 axWBCL.bar(0.4, np.mean(cp_wbcl), width, edgecolor=bC, fill=False, yerr=np.std(cp_wbcl) / np.sqrt(len(cp_wbcl)),
@@ -240,7 +246,7 @@ yl = axWBCL.get_ylim()
 yr = yl[1] - yl[0]
 xl = axWBCL.get_xlim()
 xr = xl[1] - xl[0]
-axWBCL.text(xl[0] - (xr * 0.5), yr * 0.96, 'D', ha='center', va='bottom', fontsize=10, fontweight='bold')
+axWBCL.text(xl[0] - (xr * 0.5), yr * 0.96, 'D', ha='center', va='bottom', fontsize=12, fontweight='bold')
 
 # AVNERP
 axAVNERP.bar(0.4, np.mean(cp_avnerp), width, edgecolor=bC, fill=False, yerr=np.std(cp_avnerp) / np.sqrt(len(cp_avnerp)),
@@ -264,7 +270,7 @@ yl = axAVNERP.get_ylim()
 yr = yl[1] - yl[0]
 xl = axAVNERP.get_xlim()
 xr = xl[1] - xl[0]
-axAVNERP.text(xl[0] - (xr * 0.5), yr * 0.96, 'E', ha='center', va='bottom', fontsize=10, fontweight='bold')
+axAVNERP.text(xl[0] - (xr * 0.5), yr * 0.96, 'E', ha='center', va='bottom', fontsize=12, fontweight='bold')
 
 #%% Saving
 plt.subplots_adjust(left=0.2, right=0.9, bottom=0.1, top=0.9, wspace=0.8, hspace=0.9)
