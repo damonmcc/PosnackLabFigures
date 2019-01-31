@@ -74,7 +74,6 @@ VERPmehpBASE = VERPData.base[(VERPData.group == 'mehp')]
 VERPmehpPOST = VERPData.post[(VERPData.group == 'mehp')]
 VERPmehp = [VERPmehpBASE, VERPmehpPOST]
 # Plotting
-# TODO add plot title
 for idx, axis in enumerate([axVERPctrl, axVERPmhep]):
     axis.set_xlim([0.8, 2.2])
     # axis.margins(0.8, 2.2)
@@ -93,6 +92,7 @@ axVERPctrl.plot([1, 2], VERPctrl, ls='solid', color=colorCTRL, marker='o', ms=8,
 axVERPmhep.get_yaxis().set_visible(False)
 axVERPmhep.spines['left'].set_visible(False)
 axVERPmhep.plot([1, 2], VERPmehp, ls='solid', color=colorMEHP, marker='o', ms=8, mfc='w')
+axVERPctrl.set_ylabel('VERP (ms)', fontsize=12)
 VERPctrl_legend = mlines.Line2D([], [], color=colorCTRL, ls='solid',
                                 markersize=8, label='Ctrl')
 VERPmhep_legend = mlines.Line2D([], [], color=colorMEHP, ls='solid',
@@ -103,7 +103,7 @@ yl = axVERPctrl.get_ylim()
 yr = yl[1] - yl[0]
 xl = axVERPctrl.get_xlim()
 xr = xl[1] - xl[0]
-axVERPctrl.text(xl[0] - (xr * 0.3), yl[1], 'B', ha='center', va='bottom', fontsize=12, fontweight='bold')
+axVERPctrl.text(xl[0] - (xr * 0.35), yl[1], 'B', ha='center', va='bottom', fontsize=12, fontweight='bold')
 # =============================================================================
 
 # APD Spike plots
@@ -298,6 +298,9 @@ for idx, data in enumerate([APD90MEHP_base240, APD90MEHP_post240]):
                     barWidth, ecolor=colorsBP[idx], fill=False,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
+    axAPD90_240.plot(np.linspace(barCenterTicks[1] - barWidth/2 + barOffset/2, barCenterTicks[1] + barOffset,
+                                 num=len(data)), data,
+                     'o', color=colorsBP[idx], markersize=3, mfc='none')
 yl = axAPD90_140.get_ylim()
 yr = yl[1] - yl[0]
 xl = axAPD90_140.get_xlim()
