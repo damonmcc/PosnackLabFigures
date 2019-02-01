@@ -43,6 +43,7 @@ actMapsMEHPpost = {140: np.loadtxt('data/ActMap-20180522-rata-38.csv',
                                    delimiter=',', skiprows=0),
                    240: np.loadtxt('data/ActMap-20180522-rata-28.csv',
                                    delimiter=',', skiprows=0)}
+
 # Determine max value across all activation maps
 actMapMax = 0
 print('Activation Map max values:')
@@ -105,8 +106,7 @@ roi = {'x': 226,
        'r': 7}
 
 # Load and calculate Conduction Velocity max values
-ConMax = pd.read_csv('data/APD_binned2.csv')
-
+# ConMax = pd.read_csv('data/APD_binned2.csv')
 
 
 def example_plot(axis):
@@ -120,20 +120,22 @@ def example_ActMapBase(axis, actMap):
     axis.axis('off')
     roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc='none', ec='k', lw=2)
     axis.add_artist(roi_circle)
-    axis.imshow(actMap, norm=jet_norm, cmap="jet")
+    img = axis.imshow(actMap, norm=jet_norm, cmap="jet")
     # axis.set_xlabel('x-label', fontsize=12)
     # axis.set_ylabel('y-label', fontsize=12)
     # axis.set_title('Title', fontsize=14)
+    return img
 
 
 def example_ActMapPost(axis, actMap):
     axis.axis('off')
     roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc='none', ec='k', lw=2)
     axis.add_artist(roi_circle)
-    axis.imshow(actMap, norm=jet_norm, cmap="jet")
+    img = axis.imshow(actMap, norm=jet_norm, cmap="jet")
     # axis.set_xlabel('x-label', fontsize=12)
     # axis.set_ylabel('y-label', fontsize=12)
     # axis.set_title('Title', fontsize=14)
+    return img
 
 
 def example_ConductionDelay(axis, base, post):
@@ -155,7 +157,7 @@ def example_ConductionDelay(axis, base, post):
     axis.set_xlim([0, time_window])
     axis.xaxis.set_major_locator(ticker.MultipleLocator(10))
     axis.xaxis.set_minor_locator(ticker.MultipleLocator(5))
-    # axis.set_ylabel('Vm (Normalized)', fontsize=12)
+    axis.set_ylabel('Vm (Normalized)', fontsize=12)
     axis.tick_params(axis='y', which='both', direction='in', right=False, left=True)
     axis.set_ylim([0, 1.1])
     axis.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
@@ -219,18 +221,16 @@ axActMap240base = fig.add_subplot(gsActMaps[4])
 axActMap240post = fig.add_subplot(gsActMaps[5])
 axActMap240post.text(ActMapTitleX, ActMapTitleY, 'PCL 240 ms', ha='right', va='bottom',
                      weight='semibold', transform=axActMap240post.transAxes)
-axCVMAX = fig.add_subplot(gs0[2])
-axActTimes = fig.add_subplot(gs0[3])
 
-# Build Activation Map plots
 example_ActMapPost(axActMap140base, actMapsMEHPbase[140])
 example_ActMapPost(axActMap140post, actMapsMEHPpost[140])
 example_ActMapPost(axActMap190base, actMapsMEHPbase[190])
 example_ActMapPost(axActMap190post, actMapsMEHPpost[190])
 example_ActMapPost(axActMap240base, actMapsMEHPbase[240])
-example_ActMapPost(axActMap240post, actMapsMEHPpost[240])
-# cb1 = plt.colorbar(actMapsMEHPbase[240], cax=axActMap240base, orientation="horizontal")
-# # cb1 = fig.colorbar(im1, cax=None, cmap=im1.cmap, orientation='horizontal', anchor=(0.0, 0.5))
+img = example_ActMapPost(axActMap240post, actMapsMEHPpost[240])
+
+# cb1 = plt.colorbar(img, orientation="horizontal", anchor=(1, 1.5))
+# cb1 = fig.colorbar(im1, cax=None, cmap=im1.cmap, orientation='horizontal', anchor=(0.0, 0.5))
 # cb1.set_label('Activation Time (ms)', fontsize=7)
 # cb1.set_ticks(np.linspace(0, math.ceil(max1), num=10))
 
@@ -238,6 +238,9 @@ example_ActMapPost(axActMap240post, actMapsMEHPpost[240])
 axConDelays140 = fig.add_subplot(gsConDealys[0])
 axConDelays190 = fig.add_subplot(gsConDealys[2])
 axConDelays240 = fig.add_subplot(gsConDealys[4])
+
+axConDelays140.set_title('MEHP Conduction Delay', weight='semibold')
+
 example_ConductionDelay(axConDelays140, ConDelayMEHP_base[140], ConDelayMEHP_post[140])
 example_ConductionDelay(axConDelays190, ConDelayMEHP_base[190], ConDelayMEHP_post[190])
 example_ConductionDelay(axConDelays240, ConDelayMEHP_base[240], ConDelayMEHP_post[240])
@@ -247,6 +250,8 @@ axConDelays140.legend(loc='upper left', ncol=1,
 
 
 # Fill rest with example plots
+axCVMAX = fig.add_subplot(gs0[2])
+axActTimes = fig.add_subplot(gs0[3])
 example_plot(fig.add_subplot(gsConDealys[1]))
 example_plot(fig.add_subplot(gsConDealys[3]))
 example_plot(fig.add_subplot(gsConDealys[5]))
