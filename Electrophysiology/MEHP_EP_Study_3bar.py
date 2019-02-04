@@ -19,6 +19,14 @@ import pandas as pd
 from scipy import stats
 from matplotlib import rcParams
 
+# Common parameters
+colorBase = 'indianred'
+colorPost = 'midnightblue'
+colorsBP = [colorBase, colorPost]
+colorCTRL = 'lightgrey'
+colorMEHP = 'grey'
+fontSizeLeg = 8
+
 rcParams.update({'figure.autolayout': True})
 # %% All Data Input
 snrt = pd.read_csv('data/mehp_snrt_ngp.csv')
@@ -153,7 +161,7 @@ axECGMEHP.plot(ECGMEHP[:, 0], ECGMEHP[:, 1],
                color=tC, linewidth=1.5)
 # Draw lines to show SNRT lengths
 MEHPSNRT_start = 1.78
-MEHPSNRT_width = 0.552
+MEHPSNRT_width = 0.644
 MEHPSNRT_end = MEHPSNRT_start + MEHPSNRT_width
 MEHPSNRT_Hash = MEHPSNRT_start, MEHPSNRT_end
 MEHPSNRT_HashHeight = 0.25
@@ -169,8 +177,8 @@ axECGMEHP.plot([MEHPSNRT_Hash, MEHPSNRT_Hash],
 # Draw arrows to show pacing spikes
 paceArrowX = np.linspace(0.86, MEHPSNRT_start, num=5)
 paceArrowH = MEHPSNRT_HashHeight * 0.83
-[axECGMEHP.arrow(x, paceArrowH, 0, -0.2/3,
-                 head_width=0.02, head_length=0.1/3, fc='k', ec='k') for x in paceArrowX]
+[axECGMEHP.arrow(x, paceArrowH, 0, -0.2 / 3,
+                 head_width=0.02, head_length=0.1 / 3, fc='k', ec='k') for x in paceArrowX]
 # ECG Scale: mv and ms bars forming an L
 CTRL_ECGScale = [0.15, 100 / 1000]  # 50 ms, 100 mV
 CTRL_ECGScaleOrigin = [axECGMEHP.get_xlim()[1] - 0.4, axECGMEHP.get_ylim()[0] + 0.2]
@@ -200,13 +208,19 @@ width = 0.28
 labels = ['Ctrl', 'MEHP']
 
 # SNRT
-axSNRT.bar(0.4, np.mean(cp_snrt), width, edgecolor=bC, fill=False, yerr=np.std(cp_snrt) / np.sqrt(len(cp_snrt)),
-           ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
-axSNRT.bar(0.7, np.mean(mp_snrt), width, edgecolor=tC, color=tC, fill=False,
+axSNRT.bar(0.4, np.mean(cp_snrt), width, color=colorCTRL, fill=True,
+           yerr=np.std(cp_snrt) / np.sqrt(len(cp_snrt)),
+           error_kw=dict(lw=1, capsize=4, capthick=1.0))
+axSNRT.bar(0.7, np.mean(mp_snrt), width, color=colorMEHP, fill=True,
            yerr=np.std(mp_snrt) / np.sqrt(len(mp_snrt)),
-           ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
-axSNRT.plot(np.linspace(0.35, 0.45, num=len(cp_snrt)), cp_snrt, 'o', color=bC, mfc='none')
-axSNRT.plot(np.linspace(0.65, 0.75, num=len(mp_snrt)), mp_snrt, 'o', color=tC, mfc='none')
+           error_kw=dict(lw=1, capsize=4, capthick=1.0))
+# axSNRT.bar(0.4, np.mean(cp_snrt), width, edgecolor=bC, fill=False, yerr=np.std(cp_snrt) / np.sqrt(len(cp_snrt)),
+#            ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+# axSNRT.bar(0.7, np.mean(mp_snrt), width, edgecolor=tC, color=tC, fill=False,
+#            yerr=np.std(mp_snrt) / np.sqrt(len(mp_snrt)),
+#            ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+# axSNRT.plot(np.linspace(0.35, 0.45, num=len(cp_snrt)), cp_snrt, 'o', color=bC, mfc='none')
+# axSNRT.plot(np.linspace(0.65, 0.75, num=len(mp_snrt)), mp_snrt, 'o', color=tC, mfc='none')
 axSNRT.set_ylim(bottom=0, top=602)
 axSNRT.set_xlim(left=0.2, right=0.9)
 axSNRT.spines['right'].set_visible(False)
@@ -225,12 +239,18 @@ xr = xl[1] - xl[0]
 axSNRT.text(xl[0] - (xr * 0.5), yr * 0.96, 'C', ha='center', va='bottom', fontsize=12, fontweight='bold')
 
 # WBCL
-axWBCL.bar(0.4, np.mean(cp_wbcl), width, edgecolor=bC, fill=False, yerr=np.std(cp_wbcl) / np.sqrt(len(cp_wbcl)),
-           ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
-axWBCL.bar(0.7, np.mean(mp_wbcl), width, edgecolor=tC, fill=False, yerr=np.std(mp_wbcl) / np.sqrt(len(mp_wbcl)),
-           ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
-axWBCL.plot(np.linspace(0.35, 0.45, num=len(cp_wbcl)), cp_wbcl, 'o', color=bC, mfc='none')
-axWBCL.plot(np.linspace(0.65, 0.75, num=len(mp_wbcl)), mp_wbcl, 'o', color=tC, mfc='none')
+axWBCL.bar(0.4, np.mean(cp_wbcl), width, color=colorCTRL, fill=True,
+           yerr=np.std(cp_wbcl) / np.sqrt(len(cp_wbcl)),
+           error_kw=dict(lw=1, capsize=4, capthick=1.0))
+axWBCL.bar(0.7, np.mean(mp_wbcl), width, color=colorMEHP, fill=True,
+           yerr=np.std(mp_wbcl) / np.sqrt(len(mp_wbcl)),
+           error_kw=dict(lw=1, capsize=4, capthick=1.0))
+# axWBCL.bar(0.4, np.mean(cp_wbcl), width, edgecolor=bC, fill=False, yerr=np.std(cp_wbcl) / np.sqrt(len(cp_wbcl)),
+#            ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+# axWBCL.bar(0.7, np.mean(mp_wbcl), width, edgecolor=tC, fill=False, yerr=np.std(mp_wbcl) / np.sqrt(len(mp_wbcl)),
+#            ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+# axWBCL.plot(np.linspace(0.35, 0.45, num=len(cp_wbcl)), cp_wbcl, 'o', color=bC, mfc='none')
+# axWBCL.plot(np.linspace(0.65, 0.75, num=len(mp_wbcl)), mp_wbcl, 'o', color=tC, mfc='none')
 axWBCL.set_ylim(bottom=0, top=250)
 axWBCL.set_xlim(left=0.2, right=0.9)
 axWBCL.spines['right'].set_visible(False)
@@ -249,13 +269,22 @@ xr = xl[1] - xl[0]
 axWBCL.text(xl[0] - (xr * 0.5), yr * 0.96, 'D', ha='center', va='bottom', fontsize=12, fontweight='bold')
 
 # AVNERP
-axAVNERP.bar(0.4, np.mean(cp_avnerp), width, edgecolor=bC, fill=False, yerr=np.std(cp_avnerp) / np.sqrt(len(cp_avnerp)),
-             ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
-axAVNERP.bar(0.7, np.mean(mp_avnerp), width, edgecolor=tC, color='b', fill=False,
+axAVNERP.bar(0.4, np.mean(cp_avnerp), width, color=colorCTRL, fill=True,
+             yerr=np.std(cp_avnerp) / np.sqrt(len(cp_avnerp)),
+             error_kw=dict(lw=1, capsize=4, capthick=1.0))
+axAVNERP.bar(0.7, np.mean(mp_avnerp), width, color=colorMEHP, fill=True,
              yerr=np.std(mp_avnerp) / np.sqrt(len(mp_avnerp)),
-             ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
-axAVNERP.plot(np.linspace(0.35, 0.45, num=len(cp_avnerp)), cp_avnerp, 'o', color=bC, mfc='none')
-axAVNERP.plot(np.linspace(0.65, 0.75, num=len(mp_avnerp)), mp_avnerp, 'o', color=tC, mfc='none')
+             error_kw=dict(lw=1, capsize=4, capthick=1.0))
+# axAVNERP.bar(0.7, np.mean(mp_avnerp), width, edgecolor=tC, color='b', fill=False,
+#              yerr=np.std(mp_avnerp) / np.sqrt(len(mp_avnerp)),
+#              ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+# axAVNERP.bar(0.4, np.mean(cp_avnerp), width, edgecolor=bC, fill=False, yerr=np.std(cp_avnerp) / np.sqrt(len(cp_avnerp)),
+#              ecolor=bC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+# axAVNERP.bar(0.7, np.mean(mp_avnerp), width, edgecolor=tC, color='b', fill=False,
+#              yerr=np.std(mp_avnerp) / np.sqrt(len(mp_avnerp)),
+#              ecolor=tC, error_kw=dict(lw=1, capsize=4, capthick=2.0))
+# axAVNERP.plot(np.linspace(0.35, 0.45, num=len(cp_avnerp)), cp_avnerp, 'o', color=bC, mfc='none')
+# axAVNERP.plot(np.linspace(0.65, 0.75, num=len(mp_avnerp)), mp_avnerp, 'o', color=tC, mfc='none')
 axAVNERP.set_ylim(bottom=0, top=250)
 axAVNERP.set_xlim(left=0.2, right=0.9)
 axAVNERP.spines['right'].set_visible(False)
@@ -277,6 +306,6 @@ axAVNERP.text(xl[0] - (xr * 0.5), yr * 0.96, 'E', ha='center', va='bottom', font
 plt.subplots_adjust(left=0.2, right=0.9, bottom=0.1, top=0.9, wspace=0.8, hspace=0.9)
 # fig.savefig('MEHP_AV_Properties.eps') #Vector, for loading into InkScape for touchup and further modification
 # fig.savefig('MEHP_AV_Properties.pdf') #Vector, finalized, for uploading to journal/disseminate
-# fig.savefig('MEHP_AV_Properties.png') #Raster, for web/presentations
 plt.show()
-fig.savefig('MEHP_EP_3bar.svg')
+fig.savefig('MEHP_EP_3bar.svg')  # Vector, for loading into InkScape for touchup and further modification
+fig.savefig('MEHP_EP_3bar.png')  # Raster, for web/presentations

@@ -1,9 +1,10 @@
 import numpy as np
+from matplotlib import ticker
 import matplotlib.pyplot as plt
 import matplotlib.lines as mlines
+from matplotlib.patches import ConnectionPatch
 import pandas as pd
 from scipy import stats
-from matplotlib import ticker
 
 
 def example_plot(axis):
@@ -13,18 +14,22 @@ def example_plot(axis):
     axis.set_title('Title', fontsize=14)
 
 
-fig = plt.figure(figsize=(11, 6))  # half 11 x 7 inch page
-gs0 = fig.add_gridspec(1, 2, width_ratios=[0.3, 0.7])  # Overall: 1 row, 2 columns
-gs1 = gs0[0].subgridspec(2, 1, hspace=0.3)  # 2 rows for APD80 and VERP Before-After plots
-gsBeforeAfter = gs1[1].subgridspec(1, 2, width_ratios=[0.5, 0.5], wspace=0.1)  # 2 columns for VERP Before-After plots
-gsAPD = gs0[1].subgridspec(2, 1, hspace=0.4)  # 2 rows for all APD spikes
-gsAPD1 = gsAPD[0].subgridspec(1, 4, wspace=0.5)  # 4 columns for APD spikes
-gsAPD2 = gsAPD[1].subgridspec(1, 4, wspace=0.5)  # 4 columns for APD spikes
+# Common parameters
 colorBase = 'indianred'
 colorPost = 'midnightblue'
 colorsBP = [colorBase, colorPost]
 colorCTRL = 'grey'
 colorMEHP = 'black'
+fontSizeLeg = 8
+
+fig = plt.figure(figsize=(11, 6))  # half 11 x 7 inch page
+gs0 = fig.add_gridspec(1, 2, width_ratios=[0.3, 0.7])  # Overall: 1 row, 2 columns
+gs1 = gs0[0].subgridspec(2, 1, hspace=0.3)  # 2 rows for APD80 and VERP Before-After plots
+gsBeforeAfter = gs1[1].subgridspec(1, 2, width_ratios=[0.5, 0.5], wspace=0.1)  # 2 columns for VERP Before-After plots
+gsAPD = gs0[1].subgridspec(2, 1, hspace=0.5)  # 2 rows for all APD spikes
+gsAPD1 = gsAPD[0].subgridspec(1, 4, wspace=0.6)  # 4 columns for APD spikes
+gsAPD2 = gsAPD[1].subgridspec(1, 4, wspace=0.6)  # 4 columns for APD spikes
+
 
 # APD 80 plot
 axAPD80 = fig.add_subplot(gs1[0])
@@ -46,7 +51,7 @@ APD80CTRL_legend = mlines.Line2D([], [], color=colorCTRL, ls='solid', marker='o'
 APD80MEHP_legend = mlines.Line2D([], [], color=colorMEHP, ls='dotted', marker='s',
                                  markersize=8, label='MEHP')
 axAPD80.legend(handles=[APD80CTRL_legend, APD80MEHP_legend], loc='upper left',
-               numpoints=1, fontsize=12, frameon=False)
+               numpoints=1, fontsize=8, frameon=False)
 axAPD80.errorbar(APD80Data.BCL, APD80Data.Ctrl_mean,
                  yerr=np.array(APD80Data.Ctrl_std) / np.sqrt(3),
                  ls='solid', color=colorCTRL, marker='o', ms=6)
@@ -98,11 +103,23 @@ VERPctrl_legend = mlines.Line2D([], [], color=colorCTRL, ls='solid',
 VERPmhep_legend = mlines.Line2D([], [], color=colorMEHP, ls='solid',
                                 markersize=8, label='MEHP')
 axVERPctrl.legend(handles=[VERPctrl_legend, VERPmhep_legend], loc='upper left',
-                  numpoints=1, fontsize=12, frameon=False)
+                  numpoints=1, fontsize=8, frameon=False)
+# Significant bars
 yl = axVERPctrl.get_ylim()
 yr = yl[1] - yl[0]
 xl = axVERPctrl.get_xlim()
 xr = xl[1] - xl[0]
+ySig1 = yl[1]*0.89
+ySig2 = yl[1]*0.94
+# MEHP sig.
+axVERPmhep.text(1.5, ySig1, '* p<0.05', ha='center', va='bottom', fontsize=8)
+axVERPmhep.plot([1, 2], [ySig1, ySig1], "k-")
+# Ctrl-MEHP Post sig.
+axVERPmhep.text(1, ySig2, '* p<0.05', ha='center', va='bottom', fontsize=8)
+con = ConnectionPatch(xyA=[2, ySig2], xyB=[2, ySig2], coordsA="data", coordsB="data",
+                      axesA=axVERPmhep, axesB=axVERPctrl, arrowstyle="-")
+axVERPmhep.add_artist(con)
+# Figure letter
 axVERPctrl.text(xl[0] - (xr * 0.35), yl[1], 'B', ha='center', va='bottom', fontsize=12, fontweight='bold')
 # =============================================================================
 
@@ -158,9 +175,13 @@ APDtriCTRL_base240 = APD.APDtri_240[(APD.group == 'ctrl') & (APD.context == 'bas
 APDtriCTRL_post240 = APD.APDtri_240[(APD.group == 'ctrl') & (APD.context == 'post')]
 APDtriMEHP_base240 = APD.APDtri_240[(APD.group == 'mehp') & (APD.context == 'base')]
 APDtriMEHP_post240 = APD.APDtri_240[(APD.group == 'mehp') & (APD.context == 'post')]
+# =============================================================================
+
 # Plotting
-axAPD90_140.set_title('PCL 140 ms', loc='left', fontsize=14)
-axAPD90_240.set_title('PCL 240 ms', loc='left', fontsize=14)
+# Titles
+axAPD90_140.text(-0.5, -30, 'PCL 140 ms', ha='center', va='bottom', fontsize=14)
+axAPD90_240.text(-0.5, -30, 'PCL 240 ms', ha='center', va='bottom', fontsize=14)
+
 # Action Potentials, Vm
 for idx, axis in enumerate([axVm_140, axVm_240]):
     axis.tick_params(axis='x', which='both', direction='in', bottom=True, top=False)
@@ -190,6 +211,8 @@ VmMEHP_legend = mlines.Line2D([], [], color=colorMEHP, ls='dotted', marker='s',
                               markersize=8, label='MEHP')
 axVm_140.legend(loc='upper left', ncol=1,
                 prop={'size': 8}, numpoints=1, frameon=False)
+axVm_240.legend(loc='upper left', ncol=1,
+                prop={'size': 8}, numpoints=1, frameon=False)
 yl = axVm_140.get_ylim()
 yr = yl[1] - yl[0]
 xl = axVm_140.get_xlim()
@@ -210,38 +233,38 @@ for idx, axis in enumerate([axAPD30_140, axAPD30_240]):
     axis.set_xlim([0, 1.6])
     axis.tick_params(axis='x', which='both', direction='in', bottom=True, top=False)
     axis.set_xticks(barCenterTicks)
-    axis.set_xticklabels(['Ctrl', 'MEHP'], rotation=0, fontsize=14)
+    axis.set_xticklabels(['Ctrl', 'MEHP'], rotation=0, fontsize=12)
     # axis.xaxis.set_major_locator(ticker.MultipleLocator(1))
-    # axVERP.xaxis.set_minor_locator(ticker.MultipleLocator(10))
+    # axis.xaxis.set_minor_locator(ticker.MultipleLocator(10))
     axis.set_ylabel('APD30 (ms)', fontsize=12)
-    axis.set_ylim([0, 30])
+    axis.set_ylim([0, 40])
     axis.tick_params(axis='y', which='both', direction='in', right=False, left=True)
-    axis.yaxis.set_major_locator(ticker.MultipleLocator(10))
-    axis.yaxis.set_minor_locator(ticker.MultipleLocator(5))
+    axis.yaxis.set_major_locator(ticker.MultipleLocator(5))
+    axis.yaxis.set_minor_locator(ticker.MultipleLocator(1))
     axis.spines['right'].set_visible(False)
     axis.spines['top'].set_visible(False)
 for idx, data in enumerate([APD30CTRL_base140, APD30CTRL_post140]):
     barOffset = idx * (barWidth + barGap)
     axAPD30_140.bar(barCenterTicks[0] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APD30MEHP_base140, APD30MEHP_post140]):
     barOffset = idx * (barWidth + barGap)
     axAPD30_140.bar(barCenterTicks[1] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APD30CTRL_base240, APD30CTRL_post240]):
     barOffset = idx * (barWidth + barGap)
     axAPD30_240.bar(barCenterTicks[0] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APD30MEHP_base240, APD30MEHP_post240]):
     barOffset = idx * (barWidth + barGap)
     axAPD30_240.bar(barCenterTicks[1] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 yl = axAPD30_140.get_ylim()
@@ -264,53 +287,69 @@ for idx, axis in enumerate([axAPD90_140, axAPD90_240]):
     axis.set_xlim([0, 1.6])
     axis.tick_params(axis='x', which='both', direction='in', bottom=True, top=False)
     axis.set_xticks(barCenterTicks)
-    axis.set_xticklabels(['Ctrl', 'MEHP'], rotation=0, fontsize=14)
+    axis.set_xticklabels(['Ctrl', 'MEHP'], rotation=0, fontsize=12)
     # axis.xaxis.set_major_locator(ticker.MultipleLocator(1))
     # axis.xaxis.set_minor_locator(ticker.MultipleLocator(10))
     axis.set_ylabel('APD90 (ms)', fontsize=12)
-    axis.set_ylim([0, 100])
+    axis.set_ylim([0, 120])
     axis.tick_params(axis='y', which='both', direction='in', right=False, left=True)
     axis.yaxis.set_major_locator(ticker.MultipleLocator(10))
     axis.yaxis.set_minor_locator(ticker.MultipleLocator(5))
     axis.spines['right'].set_visible(False)
     axis.spines['top'].set_visible(False)
+
+# Significant bars
+yl_140 = axAPD90_140.get_ylim()
+yr_140 = yl_140[1] - yl_140[0]
+xl_140 = axAPD90_140.get_xlim()
+xr_140 = xl_140[1] - xl_140[0]
+yl_240 = axAPD90_240.get_ylim()
+yr_240 = yl_240[1] - yl_240[0]
+xl_240 = axAPD90_240.get_xlim()
+xr_240 = xl_240[1] - xl_240[0]
+ySig1 = yl_240[1]*0.9
+ySig2 = yl_240[1]*0.98
 for idx, data in enumerate([APD90CTRL_base140, APD90CTRL_post140]):
     barOffset = idx * (barWidth + barGap)
     axAPD90_140.bar(barCenterTicks[0] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APD90MEHP_base140, APD90MEHP_post140]):
     barOffset = idx * (barWidth + barGap)
     axAPD90_140.bar(barCenterTicks[1] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APD90CTRL_base240, APD90CTRL_post240]):
     barOffset = idx * (barWidth + barGap)
     axAPD90_240.bar(barCenterTicks[0] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APD90MEHP_base240, APD90MEHP_post240]):
     barOffset = idx * (barWidth + barGap)
     axAPD90_240.bar(barCenterTicks[1] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
-    axAPD90_240.plot(np.linspace(barCenterTicks[1] - barWidth/2 + barOffset/2, barCenterTicks[1] + barOffset,
-                                 num=len(data)), data,
-                     'o', color=colorsBP[idx], markersize=3, mfc='none')
-yl = axAPD90_140.get_ylim()
-yr = yl[1] - yl[0]
-xl = axAPD90_140.get_xlim()
-xr = xl[1] - xl[0]
-axAPD90_140.text(xl[0] - (xr * 0.35), yl[1], 'G', ha='center', va='bottom', fontsize=12, fontweight='bold')
-yl = axAPD90_240.get_ylim()
-yr = yl[1] - yl[0]
-xl = axAPD90_240.get_xlim()
-xr = xl[1] - xl[0]
-axAPD90_240.text(xl[0] - (xr * 0.35), yl[1], 'H', ha='center', va='bottom', fontsize=12, fontweight='bold')
+
+    # axAPD90_240.plot(np.linspace(barCenterTicks[1] - barWidth/2 + barOffset/2, barCenterTicks[1] + barOffset,
+    #                              num=len(data)), data,
+    #                  'o', color=colorsBP[idx], markersize=3, mfc='none')
+
+# MEHP sig.
+axAPD90_240.text(barCenterTicks[1], ySig1, '* p<0.05', ha='center', va='bottom', fontsize=8)
+axAPD90_240.plot([barCenterTicks[1] - barWidth, barCenterTicks[1] + (barWidth)],
+                 [ySig1, ySig1], "k-")
+# Ctrl-MEHP Post sig.
+axAPD90_240.text(barCenterTicks[1] - (barWidth/2), ySig2, '* p<0.05', ha='center', va='bottom', fontsize=8)
+axAPD90_240.plot([barCenterTicks[0] + (barWidth/2), barCenterTicks[1] + (barWidth)],
+                 [ySig2, ySig2], "k-")
+# Figure letter
+axAPD90_140.text(xl_140[0] - (xr_140 * 0.35), yl_140[1], 'G', ha='center', va='bottom', fontsize=12, fontweight='bold')
+# Figure letter
+axAPD90_240.text(xl_240[0] - (xr_240 * 0.35), yl_240[1], 'H', ha='center', va='bottom', fontsize=12, fontweight='bold')
 # =============================================================================
 
 # AP Tri. plots
@@ -321,11 +360,11 @@ for idx, axis in enumerate([axAPtri_140, axAPtri_240]):
     axis.set_xlim([0, 1.6])
     axis.tick_params(axis='x', which='both', direction='in', bottom=True, top=False)
     axis.set_xticks(barCenterTicks)
-    axis.set_xticklabels(['Ctrl', 'MEHP'], rotation=0, fontsize=14)
+    axis.set_xticklabels(['Ctrl', 'MEHP'], rotation=0, fontsize=12)
     # axis.xaxis.set_major_locator(ticker.MultipleLocator(1))
     # axVERP.xaxis.set_minor_locator(ticker.MultipleLocator(10))
     axis.set_ylabel('AP Tri. (ms)', fontsize=12)
-    axis.set_ylim([0, 80])
+    axis.set_ylim([0, 100])
     axis.tick_params(axis='y', which='both', direction='in', right=False, left=True)
     axis.yaxis.set_major_locator(ticker.MultipleLocator(10))
     axis.yaxis.set_minor_locator(ticker.MultipleLocator(5))
@@ -334,46 +373,61 @@ for idx, axis in enumerate([axAPtri_140, axAPtri_240]):
 for idx, data in enumerate([APtriCTRL_base140, APtriCTRL_post140]):
     barOffset = idx * (barWidth + barGap)
     axAPtri_140.bar(barCenterTicks[0] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APtriMEHP_base140, APtriMEHP_post140]):
     barOffset = idx * (barWidth + barGap)
     axAPtri_140.bar(barCenterTicks[1] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APDtriCTRL_base240, APDtriCTRL_post240]):
     barOffset = idx * (barWidth + barGap)
     axAPtri_240.bar(barCenterTicks[0] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
 for idx, data in enumerate([APDtriMEHP_base240, APDtriMEHP_post240]):
     barOffset = idx * (barWidth + barGap)
     axAPtri_240.bar(barCenterTicks[1] - (barWidth / 2) + barOffset, np.mean(data),
-                    barWidth, ecolor=colorsBP[idx], fill=False,
+                    barWidth, color=colorsBP[idx], fill=True,
                     yerr=np.std(data) / np.sqrt(len(data)),
                     error_kw=dict(lw=1, capsize=4, capthick=1.0))
-yl = axAPtri_140.get_ylim()
-yr = yl[1] - yl[0]
-xl = axAPtri_140.get_xlim()
-xr = xl[1] - xl[0]
-axAPtri_140.text(xl[0] - (xr * 0.35), yl[1], 'I', ha='center', va='bottom', fontsize=12, fontweight='bold')
-yl = axAPtri_240.get_ylim()
-yr = yl[1] - yl[0]
-xl = axAPtri_240.get_xlim()
-xr = xl[1] - xl[0]
-axAPtri_240.text(xl[0] - (xr * 0.35), yl[1], 'J', ha='center', va='bottom', fontsize=12, fontweight='bold')
-# =============================================================================
+
+# Significant bars
+yl_140 = axAPtri_140.get_ylim()
+yr_140 = yl_140[1] - yl_140[0]
+xl_140 = axAPtri_140.get_xlim()
+xr_140 = xl_140[1] - xl_140[0]
+
+yl_240 = axAPtri_240.get_ylim()
+yr_240 = yl_240[1] - yl_240[0]
+xl_240 = axAPtri_240.get_xlim()
+xr_240 = xl_240[1] - xl_240[0]
+ySig1 = yl_240[1]*0.9
+ySig2 = yl_240[1]*0.98
+# MEHP sig.
+axAPtri_240.text(barCenterTicks[1], ySig1, '* p<0.05', ha='center', va='bottom', fontsize=8)
+axAPtri_240.plot([barCenterTicks[1] - barWidth, barCenterTicks[1] + (barWidth)],
+                 [ySig1, ySig1], "k-")
+# Ctrl-MEHP Post sig.
+axAPtri_240.text(barCenterTicks[1] - (barWidth/2), ySig2, '* p=0.05', ha='center', va='bottom', fontsize=8)
+axAPtri_240.plot([barCenterTicks[0] + (barWidth/2), barCenterTicks[1] + (barWidth)],
+                 [ySig2, ySig2], "k-")
+# Figure letter
+axAPtri_140.text(xl_140[0] - (xr_140 * 0.35), yl_140[1], 'I', ha='center', va='bottom', fontsize=12, fontweight='bold')
+# Figure letter
+axAPtri_240.text(xl_240[0] - (xr_240 * 0.35), yl_240[1], 'J', ha='center', va='bottom', fontsize=12, fontweight='bold')
 # Legend
 APbase_legend = mlines.Line2D([], [], color=colorBase, ls='solid',
                               linewidth=6, label='Baseline')
 APpost_legend = mlines.Line2D([], [], color=colorPost, ls='solid',
                               linewidth=6, label='30 min')
-axAPtri_140.legend(handles=[APbase_legend, APpost_legend],
+axAPD30_140.legend(handles=[APbase_legend, APpost_legend],
                    loc='upper left', ncol=1,
                    prop={'size': 8}, numpoints=1, frameon=False)
+# =============================================================================
 
 # for n in range(4):
 #     ax = fig.add_subplot(gsAPD1[n])
@@ -383,4 +437,42 @@ axAPtri_140.legend(handles=[APbase_legend, APpost_legend],
 #     example_plot(ax)
 
 fig.show()
-fig.savefig('MEHP_EP.svg')
+fig.savefig('MEHP_EP.svg')  # Vector, for loading into InkScape for touchup and further modification
+fig.savefig('MEHP_EP.png')  # Raster, for web/presentations
+
+# %% Descriptive & Comparative Statistics
+# np.mean(cp_snrt)
+# np.std(cp_snrt) / np.sqrt(len(cp_snrt))
+#
+# np.mean(mp_snrt)
+# np.std(mp_snrt) / np.sqrt(len(mp_snrt))
+
+print('\nVERP CTRL:')
+print(stats.ttest_ind(VERPctrlBASE, VERPctrlPOST, axis=0, nan_policy='omit'))
+
+print('\nVERP MEHP:')
+print(stats.ttest_ind(VERPmehpBASE, VERPmehpPOST, axis=0, nan_policy='omit'))
+
+print('\nVERP CTRL-MEHP:')
+print(stats.ttest_ind(VERPctrlPOST, VERPmehpPOST, axis=0, nan_policy='omit'))
+
+print('\nAPD90-240 CTRL:')
+print(stats.ttest_ind(APD90CTRL_base240, APD90CTRL_post240, axis=0, nan_policy='omit'))
+
+print('\nAPD90-240 MEHP:')
+print(stats.ttest_ind(APD90MEHP_base240, APD90MEHP_post240, axis=0, nan_policy='omit'))
+
+print('\nAPD90-240 CTRL-MEHP:')
+print(stats.ttest_ind(APD90CTRL_post240, APD90MEHP_post240, axis=0, nan_policy='omit'))
+
+
+print('\n# ======================================== #')
+print('\nAP Tri-240 CTRL:')
+print(stats.ttest_ind(APDtriCTRL_base240, APDtriCTRL_post240, axis=0, nan_policy='omit'))
+print('\nAP Tri-240 MEHP:')
+print(stats.ttest_ind(APDtriMEHP_base240, APDtriMEHP_post240, axis=0, nan_policy='omit'))
+print('\nAP Tri-240 CTRL-MEHP:')
+print(stats.ttest_ind(APDtriCTRL_post240, APDtriMEHP_post240, axis=0, nan_policy='omit'))
+
+# print('\nVERP MEHP:')
+# print(stats.ttest_ind(VERPmehpBASE, VERPmehpPOST, axis=0, nan_policy='omit'))
