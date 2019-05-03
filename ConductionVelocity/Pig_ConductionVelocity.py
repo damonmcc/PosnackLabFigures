@@ -87,6 +87,8 @@ roi = {'x': 155,
 # Load and calculate Conduction Velocity max values
 # ConMax = pd.read_csv('data/APD_binned2.csv')
 
+def plot_heart(axis, heart_image):
+    axis.imshow(heart_image)
 
 def example_plot(axis):
     axis.plot([1, 2])
@@ -151,36 +153,31 @@ def example_ConductionDelay(axis, base, post):
 
 # Build figure
 fig = plt.figure(figsize=(8, 8))  # _ x _ inch page
-gs0 = fig.add_gridspec(2, 2, height_ratios=[0.8, 0.2])  # Overall: ? row, ? columns
-gsActMaps = gs0[0].subgridspec(3, 2, hspace=0.3)  # 3 rows, 2 columns for Activation Maps
-gsConDealys = gs0[1].subgridspec(3, 2, hspace=0.3)  # 3 rows, 2 columns for Conduction Delays
-axCVMAX = fig.add_subplot(gs0[2])
-axActTimes = fig.add_subplot(gs0[3])
+gs0 = fig.add_gridspec(1, 2)  # Overall: ? row, ? columns
+# Build Heart section
+gsHeart = gs0[0].subgridspec(2, 1, height_ratios=[0.3, 0.7], hspace=0.3)
+axImage = fig.add_subplot(gsHeart[0])
+gsActMaps = gsHeart[1].subgridspec(2, 2, hspace=0.3)  # 2 rows, 2 columns for Activation Maps
+# Build Traces section
+gsTraces = gs0[1].subgridspec(2, 1, hspace=0.3)  # 2 rows, 1 column for Activation Maps
+axTracesSlow = fig.add_subplot(gsTraces[0])
+axTracesFast = fig.add_subplot(gsTraces[1])
+
+
 
 # Build Activation Map plots
 ActMapTitleX = 0.1
 ActMapTitleY = 1
 
 # Fill rest with example plots
+example_plot(axImage)
 example_plot(fig.add_subplot(gsActMaps[0]))
 example_plot(fig.add_subplot(gsActMaps[1]))
 example_plot(fig.add_subplot(gsActMaps[2]))
-
 example_plot(fig.add_subplot(gsActMaps[3]))
-example_plot(fig.add_subplot(gsActMaps[4]))
-example_plot(fig.add_subplot(gsActMaps[5]))
 
-
-example_plot(fig.add_subplot(gsConDealys[0]))
-example_plot(fig.add_subplot(gsConDealys[1]))
-example_plot(fig.add_subplot(gsConDealys[2]))
-
-example_plot(fig.add_subplot(gsConDealys[3]))
-example_plot(fig.add_subplot(gsConDealys[4]))
-example_plot(fig.add_subplot(gsConDealys[5]))
-
-example_plot(axCVMAX)
-example_plot(axActTimes)
+example_plot(axTracesSlow)
+example_plot(axTracesFast)
 
 # Show and save figure
 fig.show()
