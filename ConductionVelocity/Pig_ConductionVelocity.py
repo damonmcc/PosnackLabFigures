@@ -62,7 +62,7 @@ def example_Coupling(axis, Vm, Ca):
     data_Vm = Vm['data'][:, 1]
     # data_Vm = np.interp(data_Vm, (data_Vm.min(), data_Vm.max()), (0, 1))
     stim_Ca = int(Ca['act_start'] * 1000)
-    data_Ca = Ca['data'][:, 1]
+    data_Ca = -1 + Ca['data'][:, 1]
     # data_Ca = np.interp(data_Ca, (data_Ca.min(), data_Ca.max()), (0, 1))
 
     times_Vm = (Vm['data'][:, 0]) * 1000  # seconds to ms
@@ -78,10 +78,11 @@ def example_Coupling(axis, Vm, Ca):
     # axis.xaxis.set_minor_locator(ticker.MultipleLocator(5))
     axis.set_ylabel('Normalized Fluorescence', fontsize=12)
     axis.tick_params(axis='y', which='both', direction='in', right=False, left=True)
-    axis.set_ylim([0, 1.1])
+    axis.set_ylim([-1.1, 1.1])
     axis.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
     axis.yaxis.set_minor_locator(ticker.MultipleLocator(0.05))
     axis.spines['right'].set_visible(False)
+    axis.spines['left'].set_visible(False)
     axis.spines['top'].set_visible(False)
 
     axis.plot(times_Vm, data_Vm,
