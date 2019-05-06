@@ -46,17 +46,17 @@ actMapsMEHPpost = {140: np.loadtxt('data/ActMap-20180522-rata-38.csv',
                    240: np.loadtxt('data/ActMap-20180522-rata-28.csv',
                                    delimiter=',', skiprows=0)}
 
-# Determine max value across all activation maps
-actMapMax = 0
-print('Activation Map max values:')
-for key, value in actMapsMEHPbase.items():
-    print(np.nanmax(value))
-    actMapMax = max(actMapMax, np.nanmax(value))
-for key, value in actMapsMEHPpost.items():
-    print(np.nanmax(value))
-    actMapMax = max(actMapMax, np.nanmax(value))
-# Create normalization range for all activation maps
-jet_norm = colors.Normalize(vmin=0, vmax=actMapMax)
+# # Determine max value across all activation maps
+# actMapMax = 0
+# print('Activation Map max values:')
+# for key, value in actMapsMEHPbase.items():
+#     # print(np.nanmax(value))
+#     actMapMax = max(actMapMax, np.nanmax(value))
+# for key, value in actMapsMEHPpost.items():
+#     # print(np.nanmax(value))
+#     actMapMax = max(actMapMax, np.nanmax(value))
+# # Create normalization range for all activation maps
+# jet_norm = colors.Normalize(vmin=0, vmax=actMapMax)
 
 
 # Load signal data for 3 PCLs, columns: time (s), fluorescence (norm)
@@ -88,7 +88,8 @@ roi = {'x': 155,
 # ConMax = pd.read_csv('data/APD_binned2.csv')
 
 def plot_heart(axis, heart_image):
-    axis.imshow(heart_image)
+    axis.axis('off')
+    axis.imshow(heart_image, cmap='bone')
 
 def example_plot(axis):
     axis.plot([1, 2])
@@ -104,7 +105,7 @@ def example_ActMap_Vm(axis, actMap):
     img = axis.imshow(actMap, norm=jet_norm, cmap="jet")
     # axis.set_xlabel('x-label', fontsize=12)
     # axis.set_ylabel('y-label', fontsize=12)
-    # axis.set_title('Title', fontsize=14)
+    axis.set_title('Vm Title', fontsize=14)
     return img
 
 
@@ -115,7 +116,7 @@ def example_ActMap_Ca(axis, actMap):
     img = axis.imshow(actMap, norm=jet_norm, cmap="jet")
     # axis.set_xlabel('x-label', fontsize=12)
     # axis.set_ylabel('y-label', fontsize=12)
-    # axis.set_title('Title', fontsize=14)
+    axis.set_title('Ca Title', fontsize=14)
     return img
 
 
@@ -151,11 +152,13 @@ def example_ConductionDelay(axis, base, post):
               color=context_colors[1], linewidth=2, label='Post')
 
 
+
 # Build figure
 fig = plt.figure(figsize=(8, 8))  # _ x _ inch page
 gs0 = fig.add_gridspec(1, 2)  # Overall: ? row, ? columns
 # Build Heart section
-gsHeart = gs0[0].subgridspec(2, 1, height_ratios=[0.3, 0.7], hspace=0.3)
+gsHeart = gs0[0].subgridspec(2, 1, hspace=0.3)
+# gsHeart = gs0[0].subgridspec(2, 1, height_ratios=[0.3, 0.7], hspace=0.3)
 axImage = fig.add_subplot(gsHeart[0])
 gsActMaps = gsHeart[1].subgridspec(2, 2, hspace=0.3)  # 2 rows, 2 columns for Activation Maps
 # Build Traces section
@@ -163,14 +166,47 @@ gsTraces = gs0[1].subgridspec(2, 1, hspace=0.3)  # 2 rows, 1 column for Activati
 axTracesSlow = fig.add_subplot(gsTraces[0])
 axTracesFast = fig.add_subplot(gsTraces[1])
 
-
-
-# Build Activation Map plots
+# Build Activation Map section
 ActMapTitleX = 0.1
 ActMapTitleY = 1
 
+
+# Import heart image
+heart = np.rot90(plt.imread('data/20190322-piga/01-350_RH237_0001.tif'))
+
+# Import Activation Maps
+actMapsVm = {250: np.fliplr(np.rot90(np.loadtxt('data/20190322-piga/ActMaps/ActMap-11-250_RH237.csv',
+                                                delimiter=',', skiprows=0))),
+             350: np.fliplr(np.rot90(np.loadtxt('data/20190322-piga/ActMaps/ActMap-01-350_RH237.csv',
+                                                delimiter=',', skiprows=0)))}
+actMapsCa = {250: np.fliplr(np.rot90(np.loadtxt('data/20190322-piga/ActMaps/ActMap-11-250_Rhod-2.csv',
+                                                delimiter=',', skiprows=0))),
+             350: np.fliplr(np.rot90(np.loadtxt('data/20190322-piga/ActMaps/ActMap-01-350_Rhod-2.csv',
+                                                delimiter=',', skiprows=0)))}
+# Determine max value across all activation maps
+actMapMax = 0
+print('Activation Map max values:')
+for key, value in actMapsVm.items():
+    print(np.nanmax(value))
+    actMapMax = max(actMapMax, np.nanmax(value))
+for key, value in actMapsCa.items():
+    print(np.nanmax(value))
+    actMapMax = max(actMapMax, np.nanmax(value))
+# Create normalization range for all activation maps
+print('Activation Maps max value: ', actMapMax)
+jet_norm = colors.Normalize(vmin=0, vmax=actMapMax)
+
+
+# Plot heart image
+plot_heart(axis=axImage, heart_image=heart)
+# Plot activation maps
+example_ActMap_Vm(axis=fig.add_subplot(gsActMaps[0]), actMap=actMapsVm[250])
+example_ActMap_Vm(axis=fig.add_subplot(gsActMaps[2]), actMap=actMapsVm[350])
+example_ActMap_Ca(axis=fig.add_subplot(gsActMaps[1]), actMap=actMapsCa[350])
+example_ActMap_Ca(axis=fig.add_subplot(gsActMaps[3]), actMap=actMapsCa[350])
+
 # Fill rest with example plots
-example_plot(axImage)
+# example_plot(axImage)
 example_plot(fig.add_subplot(gsActMaps[0]))
 example_plot(fig.add_subplot(gsActMaps[1]))
 example_plot(fig.add_subplot(gsActMaps[2]))
@@ -178,6 +214,7 @@ example_plot(fig.add_subplot(gsActMaps[3]))
 
 example_plot(axTracesSlow)
 example_plot(axTracesFast)
+
 
 # Show and save figure
 fig.show()
