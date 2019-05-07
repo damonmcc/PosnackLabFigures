@@ -1,4 +1,5 @@
 import numpy as np
+from decimal import *
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import ticker
@@ -6,15 +7,11 @@ from matplotlib.patches import Circle, Wedge
 import seaborn as sns
 import warnings
 
-
 warnings.filterwarnings('ignore')
-sns.set(style="white", color_codes=True)
-from sklearn.preprocessing import normalize
-import matplotlib.lines as mlines
-import pandas as pd
-from scipy import stats
 
 # Set Colors
+roi_colors = ['0.45', '0.65', '0.85']
+
 colorBase = 'indianred'
 colorPost = 'midnightblue'
 colorsBP = [colorBase, colorPost]
@@ -31,64 +28,157 @@ def plot_heart(axis, heart_image):
     axis.axis('off')
     axis.imshow(heart_image, cmap='bone')
 
-def example_ActMap_Vm(axis, actMap):
+def plot_ActMapVm(axis, actMap):
     axis.axis('off')
-    roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc='none', ec='k', lw=2)
-    axis.add_artist(roi_circle)
+    for idx, roi in rois.items():
+        roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc='none',
+                            ec=roi_colors[idx-1], lw=2)
+        axis.add_artist(roi_circle)
     # ros_wedge = Wedge((ros['x'], ros['y']), ros['r'], 225, 45, fc='none', ec='k', lw=2)
     # axis.add_artist(ros_wedge)
     img = axis.imshow(actMap, norm=jet_norm, cmap="jet")
+    for idx, roi in rois.items():
+        # print('# ', idx)
+        colorRAW = img.cmap(img.norm(actMap[roi['x'], roi['y']]))
+        colorRGB = []
+        for idxx, norm in enumerate(colorRAW):
+            colorRGB.append(int(colorRAW[idxx] * 255))
+        print('ROI# ', idx, ' colorRGB: ', colorRGB)
     # axis.set_xlabel('x-label', fontsize=12)
     # axis.set_ylabel('y-label', fontsize=12)
-    axis.set_title('Vm Title', fontsize=14)
+    axis.set_title('Vm', fontsize=12)
     return img
 
 
-def example_ActMap_Ca(axis, actMap):
+def plot_ActMapCa(axis, actMap):
     axis.axis('off')
-    roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc='none', ec='k', lw=2)
-    axis.add_artist(roi_circle)
+    for idx, roi in rois.items():
+        roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc='none',
+                            ec=roi_colors[idx-1], lw=2)
+        axis.add_artist(roi_circle)
     img = axis.imshow(actMap, norm=jet_norm, cmap="jet")
     # axis.set_xlabel('x-label', fontsize=12)
     # axis.set_ylabel('y-label', fontsize=12)
-    axis.set_title('Ca Title', fontsize=14)
+    axis.set_title('Ca', fontsize=12)
     return img
 
 
-def example_Coupling(axis, Vm, Ca):
-    act_end = int(2.5 * 1000)   # seconds to ms
+def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, idx_end=None):
+    # Setup data and time (ms) variables
+    data_Vm = []
+    traces_count = data.shape[1] - 1    # Number of columns after time column
+    times_Vm = (data[:, 0]) * 1000  # seconds to ms
+    time_start, time_window = time_start * 1000, time_window * 1000
+    # Find index of first value after start time
+    for idx, time in enumerate(times_Vm):
+        if time < time_start:
+            pass
+        else:
+            idx_start = idx
+            break
 
-    stim_Vm = int(Vm['act_start'] * 1000)
-    data_Vm = Vm['data'][:, 1]
-    # data_Vm = np.interp(data_Vm, (data_Vm.min(), data_Vm.max()), (0, 1))
-    stim_Ca = int(Ca['act_start'] * 1000)
-    data_Ca = -1 + Ca['data'][:, 1]
-    # data_Ca = np.interp(data_Ca, (data_Ca.min(), data_Ca.max()), (0, 1))
+    if time_window:
+        # Find index of first value after end time
+        for idx, time in enumerate(times_Vm):
+            if time < time_start + time_window:
+                pass
+            else:
+                idx_end = idx
+                break
+        # Convert possibly strange floats to rounded Decimals
+        time_start, time_window = Decimal(time_start).quantize(Decimal('.001'), rounding=ROUND_UP),\
+                                  Decimal(time_window).quantize(Decimal('.001'), rounding=ROUND_UP)
+        # Slice time array based on indices
+        times_Vm = times_Vm[idx_start:idx_end]
 
-    times_Vm = (Vm['data'][:, 0]) * 1000  # seconds to ms
-    # times_Vm[:] = [x - stim_Vm for x in times_Vm]
-    times_Ca = (Ca['data'][:, 0]) * 1000  # seconds to ms
-    # times_Ca[:] = [x - stim_Ca for x in times_Ca]
-    time_window = 500
-
+    # Prepare axis for plotting
     axis.set_xlabel('Time (ms)', fontsize=12)
     axis.tick_params(axis='x', which='both', direction='in', bottom=True, top=False)
-    axis.set_xlim([stim_Vm, stim_Vm + time_window])
     # axis.xaxis.set_major_locator(ticker.MultipleLocator(10))
     # axis.xaxis.set_minor_locator(ticker.MultipleLocator(5))
-    axis.set_ylabel('Normalized Fluorescence', fontsize=12)
+    axis.set_ylabel('Norm. Fluor., Vm', fontsize=12)
     axis.tick_params(axis='y', which='both', direction='in', right=False, left=True)
-    axis.set_ylim([-1.1, 1.1])
-    axis.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
-    axis.yaxis.set_minor_locator(ticker.MultipleLocator(0.05))
+    axis.set_ylim([0, 1.1])
+    axis.set_yticks([])
+    axis.set_yticklabels([])
+    # axis.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
+    # axis.yaxis.set_minor_locator(ticker.MultipleLocator(0.05))
     axis.spines['right'].set_visible(False)
     axis.spines['left'].set_visible(False)
     axis.spines['top'].set_visible(False)
 
-    axis.plot(times_Vm, data_Vm,
-              color=context_colors[0], linewidth=2, label='Base')
-    axis.plot(times_Ca, data_Ca,
-              color=context_colors[1], linewidth=2, label='Post')
+    for idx in range(traces_count):
+        trace = data[:, idx + 1]
+        if time_window:
+            time_end = time_start + time_window
+            trace = trace[idx_start:idx_end]
+            axis.set_xlim([float(time_start), float(time_end)])
+        # Normalize each trace
+        data_min, data_max = np.nanmin(trace), np.nanmax(trace)
+        trace = np.interp(trace, (data_min, data_max), (0, 1))
+        data_Vm.append(trace)
+        # Plot each trace
+        axis.plot(times_Vm, trace,
+                  color=roi_colors[idx], linewidth=2, label='Base')
+
+
+def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, idx_end=None):
+    # Setup data and time (ms) variables
+    data_Ca = []
+    traces_count = data.shape[1] - 1    # Number of columns after time column
+    times_Ca = (data[:, 0]) * 1000  # seconds to ms
+    time_start, time_window = time_start * 1000, time_window * 1000
+    # Find index of first value after start time
+    for idx, time in enumerate(times_Ca):
+        if time < time_start:
+            pass
+        else:
+            idx_start = idx
+            break
+
+    if time_window:
+        # Find index of first value after end time
+        for idx, time in enumerate(times_Ca):
+            if time < time_start + time_window:
+                pass
+            else:
+                idx_end = idx
+                break
+        # Convert possibly strange floats to rounded Decimals
+        time_start, time_window = Decimal(time_start).quantize(Decimal('.001'), rounding=ROUND_UP),\
+                                  Decimal(time_window).quantize(Decimal('.001'), rounding=ROUND_UP)
+        # Slice time array based on indices
+        times_Vm = times_Ca[idx_start:idx_end]
+
+    # Prepare axis for plotting
+    axis.set_xlabel('Time (ms)', fontsize=12)
+    axis.tick_params(axis='x', which='both', direction='in', bottom=True, top=False)
+    # axis.xaxis.set_major_locator(ticker.MultipleLocator(10))
+    # axis.xaxis.set_minor_locator(ticker.MultipleLocator(5))
+    axis.set_ylabel('Norm. Fluor., Vm', fontsize=12)
+    axis.tick_params(axis='y', which='both', direction='in', right=False, left=True)
+    axis.set_ylim([0, 1.1])
+    axis.set_yticks([])
+    axis.set_yticklabels([])
+    # axis.yaxis.set_major_locator(ticker.MultipleLocator(0.2))
+    # axis.yaxis.set_minor_locator(ticker.MultipleLocator(0.05))
+    axis.spines['right'].set_visible(False)
+    axis.spines['left'].set_visible(False)
+    axis.spines['top'].set_visible(False)
+
+    for idx in range(traces_count):
+        trace = data[:, idx + 1]
+        if time_window:
+            time_end = time_start + time_window
+            trace = trace[idx_start:idx_end]
+            axis.set_xlim([float(time_start), float(time_end)])
+        # Normalize each trace
+        data_min, data_max = np.nanmin(trace), np.nanmax(trace)
+        trace = np.interp(trace, (data_min, data_max), (0, 1))
+        data_Ca.append(trace)
+        # Plot each trace
+        axis.plot(times_Vm, trace,
+                  color=roi_colors[idx], linewidth=2, label='Base')
 
 
 def example_plot(axis):
@@ -99,31 +189,23 @@ def example_plot(axis):
 
 
 # Build figure
-fig = plt.figure(figsize=(8, 8))  # _ x _ inch page
-gs0 = fig.add_gridspec(1, 2)  # Overall: ? row, ? columns
+fig = plt.figure(figsize=(8, 5))  # _ x _ inch page
+gs0 = fig.add_gridspec(1, 3, width_ratios=[0.3, 0.3, 0.4])  # Overall: ? row, ? columns
+# gs0 = fig.add_gridspec(1, 2)  # Overall: ? row, ? columns
 
 # Build heart section
-gsHeart = gs0[0].subgridspec(2, 1, hspace=0.3)
-axImage = fig.add_subplot(gsHeart[0])
+# gsHeart = gs0[0].subgridspec(2, 1, hspace=0.3)
+axImage = fig.add_subplot(gs0[0])
 
 # Build Activation Map section
-gsActMaps = gsHeart[1].subgridspec(2, 2, hspace=0.3)  # 2 rows, 2 columns for Activation Maps
-axActMapsVm = fig.add_subplot(gsActMaps[0]), fig.add_subplot(gsActMaps[2])
+gsActMaps = gs0[1].subgridspec(2, 1, hspace=0.3)  # 2 rows, 2 columns for Activation Maps
+axActMapsVm = fig.add_subplot(gsActMaps[0])
+axActMapsCa = fig.add_subplot(gsActMaps[1])
 # axActMapsVm[0].set_ylabel('PCL 250 ms')
 # axActMapsVm[1].set_ylabel('PCL 350 ms')
-axActMapsCa = fig.add_subplot(gsActMaps[1]), fig.add_subplot(gsActMaps[3])
-# Create region of interest (ROI)
-# X and Y flipped and subtracted from W and H, due to image rotation
-roi = {'y': 640-155,
-       'x': 512-255,
-       'r': 20}
-# Create Region of Stimulation (ROS)
-ros = {'y': 640-140,
-       'x': 512-360,
-       'r': 20}
 
 # Build Traces section
-gsTraces = gs0[1].subgridspec(2, 1, hspace=0.3)  # 2 rows, 1 column for Activation Maps
+gsTraces = gs0[2].subgridspec(2, 1, hspace=0.3)  # 2 rows, 1 column for Activation Maps
 axTraces = fig.add_subplot(gsTraces[0]), fig.add_subplot(gsTraces[1])
 
 # Build Activation Map section
@@ -132,16 +214,12 @@ ActMapTitleY = 1
 
 
 # Import heart image
-heart = np.rot90(plt.imread('data/20190322-piga/01-350_RH237_0001.tif'))
+heart = np.rot90(plt.imread('data/20190322-pigb/06-300_RH237_0001.tif'))
 
 # Import Activation Maps
-actMapsVm = {250: np.fliplr(np.rot90(np.loadtxt('data/20190322-piga/ActMaps/ActMap-11-250_RH237.csv',
-                                                delimiter=',', skiprows=0))),
-             350: np.fliplr(np.rot90(np.loadtxt('data/20190322-piga/ActMaps/ActMap-01-350_RH237.csv',
+actMapsVm = {300: np.fliplr(np.rot90(np.loadtxt('data/20190322-pigb/ActMaps/ActMap-06-300_RH237.csv',
                                                 delimiter=',', skiprows=0)))}
-actMapsCa = {250: np.fliplr(np.rot90(np.loadtxt('data/20190322-piga/ActMaps/ActMap-11-250_Rhod-2.csv',
-                                                delimiter=',', skiprows=0))),
-             350: np.fliplr(np.rot90(np.loadtxt('data/20190322-piga/ActMaps/ActMap-01-350_Rhod-2.csv',
+actMapsCa = {300: np.fliplr(np.rot90(np.loadtxt('data/20190322-pigb/ActMaps/ActMap-06-300_Rhod-2.csv',
                                                 delimiter=',', skiprows=0)))}
 # Determine max value across all activation maps
 actMapMax = 0
@@ -155,38 +233,35 @@ for key, value in actMapsCa.items():
 # Create normalization range for all activation maps
 print('Activation Maps max value: ', actMapMax)
 jet_norm = colors.Normalize(vmin=0, vmax=actMapMax)
-
+# Create region of interest (ROI)
+# X and Y flipped and subtracted from W and H, due to image rotation
+W, H = actMapsVm[300].shape
+rois = {1: {'y': W - 226, 'x': H - 365, 'r': 20},
+        2: {'y': W - 220, 'x': H - 276, 'r': 20},
+        3: {'y': W - 380, 'x': H - 140, 'r': 20}}
+# Create Region of Stimulation (ROS)
+ros = {'y': W - 140, 'x': H - 360, 'r': 20}
 
 # Import Traces
-# TODO change to allow reference by PCL, like ActMapsVm and actMapsCa
 # Load signal data, columns: time (s), fluorescence (norm)
 # Pair with stim activation time used for activation maps
-TraceVm_250 = {'data': np.genfromtxt('data/20190322-piga/ActMaps/Signals-11-250_RH237.csv',
-                                              delimiter=','),
-                        'act_start': 0.78}
-TraceVm_350 = {'data': np.genfromtxt('data/20190322-piga/ActMaps/Signals-01-350_RH237.csv',
-                                              delimiter=','),
-                        'act_start': 0.78}
-TraceCa_250 = {'data': np.genfromtxt('data/20190322-piga/ActMaps/Signals-11-250_Rhod-2.csv',
-                                              delimiter=','),
-                        'act_start': 0.78}
-TraceCa_350 = {'data': np.genfromtxt('data/20190322-piga/ActMaps/Signals-01-350_Rhod-2.csv',
-                                              delimiter=','),
-                        'act_start': 0.78}
+TraceVm = {300: np.genfromtxt('data/20190322-pigb/ActMaps/Signals-06-300_RH237.csv', delimiter=',')}
+
+TraceCa = {300: np.genfromtxt('data/20190322-pigb/ActMaps/Signals-06-300_Rhod-2.csv', delimiter=',')}
 
 
 # Plot heart image
 plot_heart(axis=axImage, heart_image=heart)
 # Plot activation maps
-example_ActMap_Vm(axis=axActMapsVm[0], actMap=actMapsVm[350])
-example_ActMap_Ca(axis=axActMapsCa[0], actMap=actMapsCa[350])
-
-example_ActMap_Vm(axis=axActMapsVm[1], actMap=actMapsVm[250])
-example_ActMap_Ca(axis=axActMapsCa[1], actMap=actMapsCa[250])
+ActMapVm = plot_ActMapVm(axis=axActMapsVm, actMap=actMapsVm[300])
+# get the color at pixel 5,5 (use normalization and colormap)
+plot_ActMapCa(axis=axActMapsCa, actMap=actMapsCa[300])
 
 # Plot Traces
-example_Coupling(axis=axTraces[0], Vm=TraceVm_350, Ca=TraceCa_350)
-example_Coupling(axis=axTraces[1], Vm=TraceVm_250, Ca=TraceCa_250)
+plot_TracesVm(axis=axTraces[0], data=TraceVm[300],
+              time_start=1.15, time_window=0.6)
+plot_TracesCa(axis=axTraces[1], data=TraceCa[300],
+              time_start=1.15, time_window=0.6)
 
 # Fill rest with example plots
 # example_plot(axImage)
