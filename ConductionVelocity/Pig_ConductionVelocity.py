@@ -9,6 +9,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.font_manager as fm
 import colorsys
+import ScientificColourMaps5 as scm
 import warnings
 
 warnings.filterwarnings('ignore')
@@ -67,7 +68,7 @@ def plot_ActMapVm(axis, actMap):
     axis.set_title('Activation Map', fontsize=12)
 
     # Plot Activation Map
-    img = axis.imshow(actMap, norm=jet_norm, cmap="jet")
+    img = axis.imshow(actMap, norm=cmap_norm, cmap=cmap_actMaps)
     # Create ROIs and get colors of their pixels
     for idx, roi in enumerate(rois):
         roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc='w',
@@ -87,7 +88,7 @@ def plot_ActMapVm(axis, actMap):
         print('* colorRAW was :', colorRAW)
         colorHSV = colorsys.rgb_to_hsv(colorRAW[0], colorRAW[1], colorRAW[2])
         print('colorHSV was :', colorHSV)
-        colorHSV = colorHSV[0], colorHSV[1] * 0.7, colorHSV[2]
+        colorHSV = colorHSV[0], colorHSV[1] * sat_factor, colorHSV[2]
         print('colorHSV is  :', colorHSV)
         colorRAW = colorsys.hsv_to_rgb(colorHSV[0], colorHSV[1], colorHSV[2])
         print('* colorRAW is :', colorRAW)
@@ -120,7 +121,7 @@ def plot_ActMapCa(axis, actMap):
     # axis.set_title('Ca', fontsize=12)
 
     # Plot Activation Map
-    img = axis.imshow(actMap, norm=jet_norm, cmap="jet")
+    img = axis.imshow(actMap, norm=cmap_norm, cmap=cmap_actMaps)
     axins1 = inset_axes(axis, width="5%",  # width = 5% of parent_bbox width
                         height="80%",  # height : 80%
                         loc=1, bbox_to_anchor=(-0, 0.5, 1, 1), bbox_transform=axis.transAxes,
@@ -150,7 +151,7 @@ def plot_ActMapCa(axis, actMap):
         print('* colorRAW was :', colorRAW)
         colorHSV = colorsys.rgb_to_hsv(colorRAW[0], colorRAW[1], colorRAW[2])
         print('colorHSV was :', colorHSV)
-        colorHSV = colorHSV[0], colorHSV[1] * 0.7, colorHSV[2]
+        colorHSV = colorHSV[0], colorHSV[1] * sat_factor, colorHSV[2]
         print('colorHSV is  :', colorHSV)
         colorRAW = colorsys.hsv_to_rgb(colorHSV[0], colorHSV[1], colorHSV[2])
         print('* colorRAW is :', colorRAW)
@@ -376,7 +377,11 @@ for key, value in actMapsCa.items():
     actMapMax = max(actMapMax, np.nanmax(value))
 # Create normalization range for all activation maps (round up to nearest 10)
 print('Activation Maps max value: ', actMapMax)
-jet_norm = colors.Normalize(vmin=0, vmax=round(actMapMax + 5.1, -1))
+cmap_actMaps = scm.lajolla
+cmap_norm = colors.Normalize(vmin=0, vmax=round(actMapMax + 5.1, -1))
+# Saturation factor for trace colors
+sat_factor = 0.7
+
 # Create region of interest (ROI)
 # X and Y flipped and subtracted from W and H, due to image rotation
 W, H = actMapsVm[300].shape
@@ -414,7 +419,6 @@ plot_TracesCa(axis=axTraces[1], data=TraceCa[300],
 # example_plot(fig.add_subplot(gsActMaps[1]))
 # example_plot(fig.add_subplot(gsActMaps[2]))
 # example_plot(fig.add_subplot(gsActMaps[3]))
-
 # example_plot(axTracesSlow)
 # example_plot(axTracesFast)
 
