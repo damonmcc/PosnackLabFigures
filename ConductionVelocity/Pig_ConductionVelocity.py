@@ -213,22 +213,22 @@ def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, 
     # axis.set_ylabel('Norm. Fluor., Vm', fontsize=12)
     axis.set_title('Normalized Fluorescence ', fontsize=12)
 
-    # ECG Scale: ms and Norm. Fluor. bars forming an L
+    # Scale: ms and Norm. Fluor. bars forming an L
     ECGScaleTime = [50, 250 / 1000]  # 50 ms, 0.25 Norm. Fluor.
     ECGScaleOrigin = [axis.get_xlim()[1] - 1.5*ECGScaleTime[0], axis.get_ylim()[0]+0.01]
     # ECGScaleOrigin = [axis.get_xlim()[1] - 20, axis.get_ylim()[0] + 0.3]
-    ECGScaleOriginPad = [2, 0.05]
+    ScaleOriginPad = [2, 0.05]
     # Time scale bar
     axis.plot([ECGScaleOrigin[0], ECGScaleOrigin[0] + ECGScaleTime[0]],
               [ECGScaleOrigin[1], ECGScaleOrigin[1]],
               "k-", linewidth=1)
-    axis.text(ECGScaleOrigin[0], ECGScaleOrigin[1] - ECGScaleOriginPad[1],
+    axis.text(ECGScaleOrigin[0], ECGScaleOrigin[1] - ScaleOriginPad[1],
               str(ECGScaleTime[0]) + 'ms',
               ha='left', va='top', fontsize=7, fontweight='bold')
     # # Voltage scale bar
     # axis.plot([ECGScaleOrigin[0], ECGScaleOrigin[0]],
     #           [ECGScaleOrigin[1], ECGScaleOrigin[1] + ECGScaleTime[1]],"k-", linewidth=1)
-    # axis.text(ECGScaleOrigin[0] - ECGScaleOriginPad[0], ECGScaleOrigin[1],
+    # axis.text(ECGScaleOrigin[0] - ScaleOriginPad[0], ECGScaleOrigin[1],
     #           str(ECGScaleTime[1]),
     #           ha='right', va='bottom', fontsize=7, fontweight='bold')
 
@@ -348,7 +348,7 @@ axActMapsVm = fig.add_subplot(gsActMaps[0])
 axActMapsCa = fig.add_subplot(gsActMaps[1])
 
 # Build Traces section
-gsTraces = gs0[2].subgridspec(2, 1)  # 2 rows, 1 column for Activation Maps
+gsTraces = gs0[2].subgridspec(2, 1)  # 2 rows, 1 column for Traces
 # gsTraces = gs0[2].subgridspec(2, 1, hspace=0.3)  # 2 rows, 1 column for Activation Maps
 axTraces = fig.add_subplot(gsTraces[0]), fig.add_subplot(gsTraces[1])
 
