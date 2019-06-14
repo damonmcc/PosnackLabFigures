@@ -34,7 +34,7 @@ colorsROI_CaRGB = []
 
 def plot_heart(axis, heart_image):
     # Setup plot
-    height, width, = heart_image.shape[0], heart_image.shape[1]   # X, Y flipped due to rotation
+    height, width, = heart_image.shape[0], heart_image.shape[1]  # X, Y flipped due to rotation
     axis.axis('off')
     img = axis.imshow(heart_image, cmap='bone')
 
@@ -49,7 +49,7 @@ def plot_heart(axis, heart_image):
 
 def plot_ActMapVm(axis, actMap):
     # Setup plot
-    height, width, = actMap.shape[0], actMap.shape[1]   # X, Y flipped due to rotation
+    height, width, = actMap.shape[0], actMap.shape[1]  # X, Y flipped due to rotation
     x_crop, y_crop = [0, width], [height - 100, 70]
 
     # axis.axis('off')
@@ -102,7 +102,7 @@ def plot_ActMapVm(axis, actMap):
 
 def plot_ActMapCa(axis, actMap):
     # Setup plot
-    height, width, = actMap.shape[0], actMap.shape[1]   # X, Y flipped due to rotation
+    height, width, = actMap.shape[0], actMap.shape[1]  # X, Y flipped due to rotation
     x_crop, y_crop = [0, width], [height - 100, 70]
 
     # axis.axis('off')
@@ -122,14 +122,16 @@ def plot_ActMapCa(axis, actMap):
 
     # Plot Activation Map
     img = axis.imshow(actMap, norm=cmap_norm, cmap=cmap_actMaps)
-    axins1 = inset_axes(axis, width="5%",  # width = 5% of parent_bbox width
-                        height="80%",  # height : 80%
-                        loc=1, bbox_to_anchor=(-0, 0.5, 1, 1), bbox_transform=axis.transAxes,
-                        borderpad=0)
-    cb1 = plt.colorbar(img, cax=axins1, orientation="vertical")
+    # Add colorbar
+    ax_ins1 = inset_axes(axis, width="3%",  # width: 5% of parent_bbox width
+                         height="50%",  # height : 80%
+                         loc=2,
+                         bbox_to_anchor=(0, 0.5, 1, 1), bbox_transform=axis.transAxes,
+                         borderpad=0)
+    cb1 = plt.colorbar(img, cax=ax_ins1, orientation="vertical")
     cb1.set_label('Activation Time (ms)', fontsize=8)
     # cb1.set_ticks([0, 50, 100, 150])
-    cb1.ax.yaxis.set_major_locator(ticker.MultipleLocator(25))
+    cb1.ax.yaxis.set_major_locator(ticker.MultipleLocator(50))
     cb1.ax.tick_params(labelsize=6)
     cb1.ax.yaxis.set_label_position('left')
 
@@ -163,10 +165,10 @@ def plot_ActMapCa(axis, actMap):
     return img
 
 
-def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, time_end = None, idx_end=None):
+def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, time_end=None, idx_end=None):
     # Setup data and time (ms) variables
     data_Vm = []
-    traces_count = data.shape[1] - 1    # Number of columns after time column
+    traces_count = data.shape[1] - 1  # Number of columns after time column
     times_Vm = (data[:, 0]) * 1000  # seconds to ms
     time_start, time_window = time_start * 1000, time_window * 1000
     # Find index of first value after start time
@@ -186,7 +188,7 @@ def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, 
                 idx_end = idx
                 break
         # Convert possibly strange floats to rounded Decimals
-        time_start, time_window = Decimal(time_start).quantize(Decimal('.001'), rounding=ROUND_UP),\
+        time_start, time_window = Decimal(time_start).quantize(Decimal('.001'), rounding=ROUND_UP), \
                                   Decimal(time_window).quantize(Decimal('.001'), rounding=ROUND_UP)
         # Slice time array based on indices
         times_Vm = times_Vm[idx_start:idx_end]
@@ -215,7 +217,7 @@ def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, 
 
     # Scale: ms and Norm. Fluor. bars forming an L
     ECGScaleTime = [50, 250 / 1000]  # 50 ms, 0.25 Norm. Fluor.
-    ECGScaleOrigin = [axis.get_xlim()[1] - 1.5*ECGScaleTime[0], axis.get_ylim()[0]+0.01]
+    ECGScaleOrigin = [axis.get_xlim()[1] - 1.5 * ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
     # ECGScaleOrigin = [axis.get_xlim()[1] - 20, axis.get_ylim()[0] + 0.3]
     ScaleOriginPad = [2, 0.05]
     # Time scale bar
@@ -245,10 +247,10 @@ def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, 
                   color=colorsROI_VmRAW[idx], linewidth=2, label='Base')
 
 
-def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, time_end = None, idx_end=None):
+def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, time_end=None, idx_end=None):
     # Setup data and time (ms) variables
     data_Ca = []
-    traces_count = data.shape[1] - 1    # Number of columns after time column
+    traces_count = data.shape[1] - 1  # Number of columns after time column
     times_Ca = (data[:, 0]) * 1000  # seconds to ms
     time_start, time_window = time_start * 1000, time_window * 1000
     # Find index of first value after start time
@@ -268,7 +270,7 @@ def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, 
                 idx_end = idx
                 break
         # Convert possibly strange floats to rounded Decimals
-        time_start, time_window = Decimal(time_start).quantize(Decimal('.001'), rounding=ROUND_UP),\
+        time_start, time_window = Decimal(time_start).quantize(Decimal('.001'), rounding=ROUND_UP), \
                                   Decimal(time_window).quantize(Decimal('.001'), rounding=ROUND_UP)
         # Slice time array based on indices
         times_Ca = times_Ca[idx_start:idx_end]
@@ -297,7 +299,7 @@ def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, 
 
     # ECG Scale: ms and Norm. Fluor. bars forming an L
     ECGScaleTime = [50, 250 / 1000]  # 50 ms, 0.25 Norm. Fluor.
-    ECGScaleOrigin = [axis.get_xlim()[1] - 1.5*ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
+    ECGScaleOrigin = [axis.get_xlim()[1] - 1.5 * ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
     # ECGScaleOrigin = [axis.get_xlim()[1] - 20, axis.get_ylim()[0] + 0.3]
     ECGScaleOriginPad = [2, 0.05]
     # Time scale bar
@@ -321,7 +323,7 @@ def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, 
         # Normalize each trace
         data_min, data_max = np.nanmin(trace), np.nanmax(trace)
         trace = np.interp(trace, (data_min, data_max), (0, 1))
-        trace = 1 - trace   # Need to invert, accidentally exported as voltage??
+        trace = 1 - trace  # Need to invert, accidentally exported as voltage??
         data_Ca.append(trace)
         # Plot each trace
         axis.plot(times_Ca, trace,
@@ -355,7 +357,6 @@ axTraces = fig.add_subplot(gsTraces[0]), fig.add_subplot(gsTraces[1])
 # Build Activation Map section
 ActMapTitleX = 0.1
 ActMapTitleY = 1
-
 
 # Import heart image
 heart = np.fliplr(np.rot90(plt.imread('data/20190322-pigb/06-300_RH237_0001.tif')))
@@ -398,13 +399,11 @@ TraceVm = {300: np.genfromtxt('data/20190322-pigb/ActMaps/Signals-06-300_RH237.c
 
 TraceCa = {300: np.genfromtxt('data/20190322-pigb/ActMaps/Signals-06-300_Rhod-2.csv', delimiter=',')}
 
-
 # Plot heart image
 plot_heart(axis=axImage, heart_image=heart)
 # plot_heart(axis=axImage, heart_image=heart_thresh)
 # Plot activation maps
 ActMapVm = plot_ActMapVm(axis=axActMapsVm, actMap=actMapsVm[300])
-# get the color at pixel 5,5 (use normalization and colormap)
 plot_ActMapCa(axis=axActMapsCa, actMap=actMapsCa[300])
 
 # Plot Traces
