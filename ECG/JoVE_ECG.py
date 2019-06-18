@@ -22,8 +22,9 @@ colorCapture = 'indianred'
 # colorsBP = [colorBase, colorPost]
 colorCTRL = 'lightgrey'
 colorTace = 'grey'
-fontsize_PaceLabel = 6
+fontsize_TraceTitle = 10
 fontSize_TraceYLabel = 8
+fontsize_PaceLabel = 5
 # Scale: Time and Normalized Voltage bars forming an L
 ECGScaleTime = [500, 250 / 1000]  # 0.5 s, 0.2 Normalized V.
 
@@ -155,7 +156,7 @@ def plot_paces(axis, data, s1_num, s1_pcl, s2_pcl=None, time_start=0.0, time_win
     pace_start = time_start
     pace_end = pace_start + (s1_num * s1_pcl)
     # paceArrowL = -0.12
-    paceArrowL = -0.05
+    paceArrowL = -0.04
     paceArrowHeadL = 0.05
     paceArrowX = np.linspace(pace_start, pace_end, num=s1_num, endpoint=False)
     # paceArrowY = trace_norm[idx_start] - paceArrowL + (2 * paceArrowHeadL)
@@ -165,12 +166,17 @@ def plot_paces(axis, data, s1_num, s1_pcl, s2_pcl=None, time_start=0.0, time_win
                 head_width=paceArrowHeadW, head_length=paceArrowHeadL,
                 fc=colorPace, ec=colorPace) for x in paceArrowX]
 
+    paceLabel_Y = 1.1
+
+    if site is 'LV':
+        capture_gap = 100
+    else:
+        capture_gap = 250
+
     if not s2_pcl:
-        axis.text(0, 1, 'S1-S1: ' + str(s1_pcl) + ' ms', ha='left',
+        axis.text(0, paceLabel_Y, 'S1-S1: ' + str(s1_pcl) + ' ms', ha='left',
                   fontsize=fontsize_PaceLabel, transform=axis.transAxes)
         if capture is not None:
-            capture_gap = s1_pcl
-            if site is 'LV': capture_gap = 100
             if capture:
                 capture_text = 'C'
             else:
@@ -178,7 +184,9 @@ def plot_paces(axis, data, s1_num, s1_pcl, s2_pcl=None, time_start=0.0, time_win
 
             capture_x = paceArrowX[-1] + capture_gap
             capture_x_frac = (capture_x - axis.get_xlim()[0]) / (time_window * 1000)
-            axis.text(capture_x_frac, 1, capture_text, ha='center',
+            capture_y = 0.95
+            capture_y_frac = (capture_y - axis.get_ylim()[0]) / (axis.get_ylim()[1] - axis.get_ylim()[0])
+            axis.text(capture_x_frac, capture_y_frac, capture_text, ha='center',
                       fontsize=fontsize_PaceLabel, transform=axis.transAxes)
             axis.arrow(capture_x, 1, 0, paceArrowL,
                        head_width=paceArrowHeadW, head_length=paceArrowHeadL,
@@ -195,29 +203,32 @@ def plot_paces(axis, data, s1_num, s1_pcl, s2_pcl=None, time_start=0.0, time_win
             else:
                 idx_pace = idx
                 break
-        axis.text(0, 1, 'S1-S1: ' + str(s1_pcl) + ' ms\n'
-                                                  'S1-S2: ' + str(s2_pcl) + ' ms',
+        axis.text(0, paceLabel_Y, 'S1-S1: ' + str(s1_pcl) + ' ms\n'
+                                                            'S1-S2: ' + str(s2_pcl) + ' ms',
                   ha='left', fontsize=fontsize_PaceLabel, transform=axis.transAxes)
-
-        if capture is not None:
-            capture_gap = s2_pcl
-            if capture:
-                capture_text = 'C'
-            else:
-                capture_text = 'NC'
-            capture_x = pace_start + capture_gap
-            capture_x_frac = (capture_x - axis.get_xlim()[0]) / (time_window * 1000)
-            axis.text(capture_x_frac, 1, capture_text, ha='center',
-                      fontsize=fontsize_PaceLabel, transform=axis.transAxes)
-            axis.arrow(capture_x, 1, 0, paceArrowL,
-                       head_width=paceArrowHeadW, head_length=paceArrowHeadL,
-                       fc=colorCapture, ec=colorCapture)
 
         # paceArrowY = trace_norm[idx_pace] - paceArrowL + (2 * paceArrowHeadL)
         paceArrowY = 1
         axis.arrow(pace_start, paceArrowY, 0, paceArrowL,
                    head_width=paceArrowHeadW, head_length=paceArrowHeadL,
                    fc=colorPace, ec=colorPace)
+
+        if capture is not None:
+            if capture:
+                capture_text = 'C'
+            else:
+                capture_text = 'NC'
+
+            capture_x = pace_start + capture_gap
+            capture_x_frac = (capture_x - axis.get_xlim()[0]) / (time_window * 1000)
+            capture_y = 0.95
+            capture_y_frac = (capture_y - axis.get_ylim()[0]) / (axis.get_ylim()[1] - axis.get_ylim()[0])
+            axis.text(capture_x_frac, capture_y_frac, capture_text, ha='center',
+                      fontsize=fontsize_PaceLabel, transform=axis.transAxes)
+            axis.arrow(capture_x, capture_y, 0, paceArrowL,
+                       head_width=paceArrowHeadW, head_length=paceArrowHeadL,
+                       fc=colorCapture, ec=colorCapture)
+
 
 
 def example_plot(axis):
@@ -240,28 +251,28 @@ gs3 = gs0[2].subgridspec(2, 1, hspace=0.3)  # 2 rows for ECG traces
 gs4 = gs0[3].subgridspec(2, 1, hspace=0.3)  # 2 rows for ECG traces
 
 axECG_NSR1 = fig.add_subplot(gs1[0])
-axECG_NSR1.set_title('Sinus Rhythm')
+axECG_NSR1.set_title('Sinus Rhythm', fontsize=fontsize_TraceTitle)
 axECG_NSR2 = fig.add_subplot(gs1[1])
-axECG_NSR2.set_title('Epicardial Pacing')
+axECG_NSR2.set_title('Epicardial Pacing', fontsize=fontsize_TraceTitle)
 
 axECG_VERP1 = fig.add_subplot(gs2[0])
 axECG_VERP2 = fig.add_subplot(gs2[1])
-axECG_VERP1.set_title('VERP')
+axECG_VERP1.set_title('VERP', fontsize=fontsize_TraceTitle)
 
 axECG_WBCL1 = fig.add_subplot(gs3[0])
 axECG_WBCL2 = fig.add_subplot(gs3[1])
-axECG_WBCL1.set_title('WBCL')
+axECG_WBCL1.set_title('WBCL', fontsize=fontsize_TraceTitle)
 
 axECG_AVNERP1 = fig.add_subplot(gs4[0])
 axECG_AVNERP2 = fig.add_subplot(gs4[1])
-axECG_AVNERP1.set_title('AVNERP')
+axECG_AVNERP1.set_title('AVNERP', fontsize=fontsize_TraceTitle)
 
 # Import ECG Traces
 
 # Skip header and import columns: times (ms), ECG (mV)
 ECG_NSR1 = np.genfromtxt('data/20190517-pigA_NSR1.txt',
                          skip_header=31, usecols=(0, 1), skip_footer=2)
-ECG_NSR2 = np.genfromtxt('data/20190517-pigA_LV1.txt',
+ECG_NSR2 = np.genfromtxt('data/20190517-pigA_LV0.txt',
                          skip_header=31, usecols=(0, 1), skip_footer=2)
 
 ECG_VERP1 = np.genfromtxt('data/20190517-pigA_LV2.txt',
@@ -287,7 +298,7 @@ paceStart = 1
 plot_Traces(axis=axECG_NSR1, data=ECG_NSR1,
             time_start=traceStart, time_window=timeWindow)
 
-traceStart = 2.6
+traceStart = 4.3
 plot_Traces(axis=axECG_NSR2, data=ECG_NSR2,
             time_start=traceStart, time_window=timeWindow)
 plot_paces(axis=axECG_NSR2, data=ECG_NSR2,
