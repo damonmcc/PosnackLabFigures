@@ -43,7 +43,7 @@ def plot_heart(axis, heart_image):
     # Scale Bar
     heart_scale = [67, 67]  # x, y (pixels/cm)
     heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm', 'lower right', pad=0.2,
-                                      color='k', frameon=False, fontproperties=fm.FontProperties(size=7))
+                                      color='w', frameon=False, fontproperties=fm.FontProperties(size=7, weight='bold'))
     axis.add_artist(heart_scale_bar)
 
 
@@ -65,7 +65,6 @@ def plot_ActMapVm(axis, actMap):
     axis.set_ylabel('Vm', fontsize=18)
     # axis.set_xlim(x_crop)
     axis.set_ylim(y_crop)
-    axis.set_title('Activation Map', fontsize=12)
 
     # Plot Activation Map
     img = axis.imshow(actMap, norm=cmap_norm, cmap=cmap_actMaps)
@@ -126,7 +125,7 @@ def plot_ActMapCa(axis, actMap):
     ax_ins1 = inset_axes(axis, width="3%",  # width: 5% of parent_bbox width
                          height="50%",  # height : 80%
                          loc=2,
-                         bbox_to_anchor=(0, 0.5, 1, 1), bbox_transform=axis.transAxes,
+                         bbox_to_anchor=(0, 0.35, 1, 1), bbox_transform=axis.transAxes,
                          borderpad=0)
     cb1 = plt.colorbar(img, cax=ax_ins1, orientation="vertical")
     cb1.set_label('Activation Time (ms)', fontsize=8)
@@ -172,20 +171,20 @@ def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, 
     times_Vm = (data[:, 0]) * 1000  # seconds to ms
     time_start, time_window = time_start * 1000, time_window * 1000
     # Find index of first value after start time
-    for idx, time in enumerate(times_Vm):
+    for trace_idx, time in enumerate(times_Vm):
         if time < time_start:
             pass
         else:
-            idx_start = idx
+            idx_start = trace_idx
             break
 
     if time_window:
         # Find index of first value after end time
-        for idx, time in enumerate(times_Vm):
+        for trace_idx, time in enumerate(times_Vm):
             if time < time_start + time_window:
                 pass
             else:
-                idx_end = idx
+                idx_end = trace_idx
                 break
         # Convert possibly strange floats to rounded Decimals
         time_start, time_window = Decimal(time_start).quantize(Decimal('.001'), rounding=ROUND_UP), \
@@ -220,13 +219,13 @@ def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, 
     ECGScaleOrigin = [axis.get_xlim()[1] - 1.5 * ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
     # ECGScaleOrigin = [axis.get_xlim()[1] - 20, axis.get_ylim()[0] + 0.3]
     ScaleOriginPad = [2, 0.05]
-    # Time scale bar
-    axis.plot([ECGScaleOrigin[0], ECGScaleOrigin[0] + ECGScaleTime[0]],
-              [ECGScaleOrigin[1], ECGScaleOrigin[1]],
-              "k-", linewidth=1)
-    axis.text(ECGScaleOrigin[0], ECGScaleOrigin[1] - ScaleOriginPad[1],
-              str(ECGScaleTime[0]) + 'ms',
-              ha='left', va='top', fontsize=7, fontweight='bold')
+    # # Time scale bar
+    # axis.plot([ECGScaleOrigin[0], ECGScaleOrigin[0] + ECGScaleTime[0]],
+    #           [ECGScaleOrigin[1], ECGScaleOrigin[1]],
+    #           "k-", linewidth=1)
+    # axis.text(ECGScaleOrigin[0], ECGScaleOrigin[1] - ScaleOriginPad[1],
+    #           str(ECGScaleTime[0]) + 'ms',
+    #           ha='left', va='top', fontsize=7, fontweight='bold')
     # # Voltage scale bar
     # axis.plot([ECGScaleOrigin[0], ECGScaleOrigin[0]],
     #           [ECGScaleOrigin[1], ECGScaleOrigin[1] + ECGScaleTime[1]],"k-", linewidth=1)
@@ -234,17 +233,33 @@ def plot_TracesVm(axis, data, time_start=0.0, idx_start=None, time_window=None, 
     #           str(ECGScaleTime[1]),
     #           ha='right', va='bottom', fontsize=7, fontweight='bold')
 
-    for idx in range(traces_count):
-        trace = data[:, idx + 1]
+    # Plot each trace
+    # BUT cutoff all but the first trace after a chose time
+    extra_trace_cutoff = 335
+    extra_trace_cutoff_idx = None
+    # Find index of first value after end time
+    for idx, time in enumerate(times_Vm):
+        if time < time_start + extra_trace_cutoff:
+            pass
+        else:
+            extra_trace_cutoff_idx = idx
+            break
+
+    for trace_idx in range(traces_count):
+        trace = data[:, trace_idx + 1]
         if time_window:
             trace = trace[idx_start:idx_end]
         # Normalize each trace
         data_min, data_max = np.nanmin(trace), np.nanmax(trace)
         trace = np.interp(trace, (data_min, data_max), (0, 1))
         data_Vm.append(trace)
-        # Plot each trace
-        axis.plot(times_Vm, trace,
-                  color=colorsROI_VmRAW[idx], linewidth=2, label='Base')
+
+        if trace_idx is 0:
+            axis.plot(times_Vm, trace,
+                      color=colorsROI_VmRAW[trace_idx], linewidth=2, label='Base')
+        else:
+            axis.plot(times_Vm[:extra_trace_cutoff_idx], trace[:extra_trace_cutoff_idx],
+                      color=colorsROI_VmRAW[trace_idx], linewidth=2, label='Base')
 
 
 def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, time_end=None, idx_end=None):
@@ -297,8 +312,38 @@ def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, 
     # axis.set_ylabel('Norm. Fluor., Vm', fontsize=12)
     # axis.set_title('Normalized Fluorescence ', fontsize=12)
 
+    # Plot each trace
+    # BUT cutoff all but the first trace after a chose time
+    extra_trace_cutoff = 335
+    extra_trace_cutoff_idx = None
+    # Find index of first value after end time
+    for idx, time in enumerate(times_Ca):
+        if time < time_start + extra_trace_cutoff:
+            pass
+        else:
+            extra_trace_cutoff_idx = idx
+            break
+
+    for trace_idx in range(traces_count):
+        trace = data[:, trace_idx + 1]
+        if time_window:
+            trace = trace[idx_start:idx_end]
+        # Normalize each trace
+        data_min, data_max = np.nanmin(trace), np.nanmax(trace)
+        trace = np.interp(trace, (data_min, data_max), (0, 1))
+        trace = 1 - trace  # Need to invert, accidentally exported as voltage??
+        data_Ca.append(trace)
+        # Plot each trace
+
+        if trace_idx is 0:
+            axis.plot(times_Ca, trace,
+                      color=colorsROI_CaRAW[trace_idx], linewidth=2, label='Base')
+        else:
+            axis.plot(times_Ca[:extra_trace_cutoff_idx], trace[:extra_trace_cutoff_idx],
+                      color=colorsROI_CaRAW[trace_idx], linewidth=2, label='Base')
+
     # ECG Scale: ms and Norm. Fluor. bars forming an L
-    ECGScaleTime = [50, 250 / 1000]  # 50 ms, 0.25 Norm. Fluor.
+    ECGScaleTime = [100, 250 / 1000]  # 100 ms, 0.25 Norm. Fluor.
     ECGScaleOrigin = [axis.get_xlim()[1] - 1.5 * ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
     # ECGScaleOrigin = [axis.get_xlim()[1] - 20, axis.get_ylim()[0] + 0.3]
     ECGScaleOriginPad = [2, 0.05]
@@ -315,19 +360,6 @@ def plot_TracesCa(axis, data, time_start=0.0, idx_start=None, time_window=None, 
     # axis.text(ECGScaleOrigin[0] - ECGScaleOriginPad[0], ECGScaleOrigin[1],
     #           str(ECGScaleTime[1]),
     #           ha='right', va='bottom', fontsize=7, fontweight='bold')
-
-    for idx in range(traces_count):
-        trace = data[:, idx + 1]
-        if time_window:
-            trace = trace[idx_start:idx_end]
-        # Normalize each trace
-        data_min, data_max = np.nanmin(trace), np.nanmax(trace)
-        trace = np.interp(trace, (data_min, data_max), (0, 1))
-        trace = 1 - trace  # Need to invert, accidentally exported as voltage??
-        data_Ca.append(trace)
-        # Plot each trace
-        axis.plot(times_Ca, trace,
-                  color=colorsROI_CaRAW[idx], linewidth=2, label='Base')
 
 
 def example_plot(axis):
@@ -403,14 +435,15 @@ TraceCa = {300: np.genfromtxt('data/20190322-pigb/ActMaps/Signals-06-300_Rhod-2.
 plot_heart(axis=axImage, heart_image=heart)
 # plot_heart(axis=axImage, heart_image=heart_thresh)
 # Plot activation maps
-ActMapVm = plot_ActMapVm(axis=axActMapsVm, actMap=actMapsVm[300])
+axActMapsVm.set_title('Activation Maps', fontsize=12)
+plot_ActMapVm(axis=axActMapsVm, actMap=actMapsVm[300])
 plot_ActMapCa(axis=axActMapsCa, actMap=actMapsCa[300])
 
 # Plot Traces
 plot_TracesVm(axis=axTraces[0], data=TraceVm[300],
-              time_start=1.15, time_window=0.5)
+              time_start=1.15, time_window=0.64)
 plot_TracesCa(axis=axTraces[1], data=TraceCa[300],
-              time_start=1.15, time_window=0.5)
+              time_start=1.15, time_window=0.64)
 
 # Fill rest with example plots
 # example_plot(axImage)
@@ -424,4 +457,4 @@ plot_TracesCa(axis=axTraces[1], data=TraceCa[300],
 
 # Show and save figure
 fig.show()
-fig.savefig('Pig_CV.svg')
+fig.savefig('JoVE_OpticalMapping.svg')
