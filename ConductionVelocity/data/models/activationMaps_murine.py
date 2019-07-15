@@ -1,11 +1,12 @@
 """
-Generates model activation maps of murine epicardial tissue.
+Generates model activation maps and activation curves of murine epicardial tissue.
 """
 
 import math
 import random
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.colors as colors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import ScientificColourMaps5 as scm
 
@@ -23,74 +24,125 @@ def example_plot(axis):
     # axis.set_title('Title', fontsize=14)
 
 
-# Dimensions of model data (px)
-HEIGHT = 50
-WIDTH = 50
+def generate_ActMap(conduction_v):
+    # Dimensions of model data (px)
+    HEIGHT = 50
+    WIDTH = 50
+    # Allocate space for the Activation Map
+    actMap = np.zeros(shape=(WIDTH, HEIGHT))
+    # # Given conduction velocity (cm/s)
+    # CV = 50
+    # Spatial resolution (cm/px)
+    resolution = 0.02   # 1 cm / 50 px
+    # Number of frames ()
+    frame_num = 10
+    # Sampling frequency (Hz)
+    sample_f = 500
 
-# Allocate space for the Activation Map
-actMap = np.zeros(shape=(WIDTH, HEIGHT))
+    # Convert dimensions to cm
+    HEIGHT = HEIGHT * resolution
+    WIDTH = WIDTH * resolution
 
-# Spatial resolution (cm/px)
-resolution = 0.01
+    # Generate an isotropic activation map, radiating from the center
+    origin_x, origin_y = WIDTH / 2, HEIGHT / 2
+    # Assign an activation time to each pixel
+    for ix, iy in np.ndindex(actMap.shape):
+        # Compute the distance from the center (cm)
+        d = math.sqrt((abs(origin_x - ix) ** 2 + abs((origin_y - iy) ** 2)))
+        # Assign the time associated with that distance from the point of activation
+        actMap[ix, iy] = d / conduction_v
+        # convert from seconds to ms
+        actMap[ix, iy] = actMap[ix, iy]*1000
+    print('Isotropic act. map generated')
+    return actMap
 
-# Number of frames ()
-frame_num = 10
 
-# Sampling frequency (Hz)
-sample_f = 500
+def generate_ActCurve(actMap):
+    xbins = np.arange(0, actMap.max(), 1)
+    # TODO change 0.01 to min-diff of two actMap values? (temporal resolution)
+    hist = np.histogram(actMap, xbins)
+    # a = np.hstack((rng.normal(size=1000), rng.normal(loc=5, scale=2, size=1000)))
+    # tissueact = 100 * np.cumsum(hist(tim,xbins))/allpts;
 
-# Given conduction velocity (cm/s)
-CV = 50
+    tissueact = 100 * np.cumsum(hist[0]) / actMap.size
+    return tissueact
 
-# Generate an isotropic activation map, radiating from the center
-origin_x, origin_y = WIDTH / 2, HEIGHT / 2
-# Assign an activation time to each pixel
-for ix, iy in np.ndindex(actMap.shape):
-    # Compute the distance from the center
-    d = math.sqrt((abs(origin_x - ix) ** 2 + abs((origin_y - iy) ** 2)))
-    # Assign the time associated with that distance from the point of activation
-    actMap[ix, iy] = d / CV
-    print(actMap[ix, iy])
 
-print('Isotropic act. map generated')
-
-# Plot the activation map
+# Setup the figure
 fig = plt.figure()  # _ x _ inch page
 # fig = plt.figure(figsize=(8, 5))  # _ x _ inch page
-gs0 = fig.add_gridspec(1, 2, width_ratios=[0.3, 0.4])  # Overall: ? row, ? columns
-
-axis_Iso = fig.add_subplot(gs0[0])
-axis_Iso.spines['right'].set_visible(False)
-axis_Iso.spines['left'].set_visible(False)
-axis_Iso.spines['top'].set_visible(False)
-axis_Iso.spines['bottom'].set_visible(False)
-axis_Iso.set_yticks([])
-axis_Iso.set_yticklabels([])
-axis_Iso.set_xticks([])
-axis_Iso.set_xticklabels([])
+gs0 = fig.add_gridspec(1, 3, width_ratios=[0.3, 0.3, 0.4])  # Overall: ? row, ? columns
+# Set activation map color map
 cmap_actMaps = scm.lajolla
 
-actMap_Iso = axis_Iso.imshow(actMap, cmap=cmap_actMaps)
+# Generate all activation maps
+actMap_Fast = generate_ActMap(conduction_v=70)
+actMap_Slow = generate_ActMap(conduction_v=50)
+actMaps = [actMap_Slow, actMap_Fast]
+
+# Determine max value across all activation maps
+actMapMax = 0
+print('Activation Map max values:')
+for map in actMaps:
+    print(np.nanmax(map))
+    actMapMax = max(actMapMax, np.nanmax(map))
+# Normalize across
+# cmap_norm = colors.Normalize(vmin=0, vmax=round(actMapMax + 1.1, -1))
+cmap_norm = colors.Normalize(vmin=0, vmax=actMapMax)
+
+# Plot the activation maps
+# "Fast" conduction velocity actMap
+axis_actMap_Fast = fig.add_subplot(gs0[0])
+font = {'color':  'r',
+        'size': 10,
+        }
+axis_actMap_Fast.set_title('"Fast" CV: 70 cm/s', fontdict=font)
+axis_actMap_Fast.spines['right'].set_visible(False)
+axis_actMap_Fast.spines['left'].set_visible(False)
+axis_actMap_Fast.spines['top'].set_visible(False)
+axis_actMap_Fast.spines['bottom'].set_visible(False)
+# axis_actMap_Fast.set_yticks([])
+# axis_actMap_Fast.set_yticklabels([])
+# axis_actMap_Fast.set_xticks([])
+# axis_actMap_Fast.set_xticklabels([])
+img_actMap_Fast = axis_actMap_Fast.imshow(actMap_Fast, norm=cmap_norm, cmap=cmap_actMaps)
+# "Slow" conduction velocity actMap
+axis_actMap_Slow = fig.add_subplot(gs0[1])
+font = {'color':  'k',
+        'size': 10,
+        }
+axis_actMap_Slow.set_title('"Slow" CV: 50 cm/s', fontdict=font)
+axis_actMap_Slow.spines['right'].set_visible(False)
+axis_actMap_Slow.spines['left'].set_visible(False)
+axis_actMap_Slow.spines['top'].set_visible(False)
+axis_actMap_Slow.spines['bottom'].set_visible(False)
+axis_actMap_Slow.set_yticks([])
+axis_actMap_Slow.set_yticklabels([])
+axis_actMap_Slow.set_xticks([])
+axis_actMap_Slow.set_xticklabels([])
+img_actMap_Slow = axis_actMap_Slow.imshow(actMap_Slow, norm=cmap_norm,  cmap=cmap_actMaps)
+
 # Add colorbar (lower center of act. map)
-ax_ins1 = inset_axes(axis_Iso, width="50%",  # width: 5% of parent_bbox width
+ax_ins1 = inset_axes(axis_actMap_Slow, width="50%",  # width: 5% of parent_bbox width
                      height="3%",  # height : 80%
                      loc=8,
-                     bbox_to_anchor=(0, -0.1, 1, 1), bbox_transform=axis_Iso.transAxes,
+                     bbox_to_anchor=(0, -0.1, 1, 1), bbox_transform=axis_actMap_Slow.transAxes,
                      borderpad=0)
-cb1 = plt.colorbar(actMap_Iso, cax=ax_ins1, orientation="horizontal")
+cb1 = plt.colorbar(img_actMap_Slow, cax=ax_ins1, orientation="horizontal")
+cb1.set_label('Activation Time (ms)', fontsize=8)
 
-#
-# Generate an activation curve
-# example_plot(fig.add_subplot(gs0[1]))
-xbins = np.arange(0, actMap.max(), 0.01)
-hist = np.histogram(actMap, xbins)
-# a = np.hstack((rng.normal(size=1000), rng.normal(loc=5, scale=2, size=1000)))
-# tissueact = 100 * np.cumsum(hist(tim,xbins))/allpts;
-
-tissueact = 100 * np.cumsum(hist[0])/actMap.size
-
-axis_actCurve = fig.add_subplot(gs0[1])
-axis_actCurve.plot(tissueact)
+# Generate activation curves
+actCurve_Fast = generate_ActCurve(actMap_Fast)
+actCurve_Slow = generate_ActCurve(actMap_Slow)
+# Plot activation curves
+axis_actCurve = fig.add_subplot(gs0[2])
+axis_actCurve.set_ylabel('Tissue Activation (%)', fontsize=10)
+axis_actCurve.spines['top'].set_visible(False)
+axis_actCurve.spines['right'].set_visible(False)
+axis_actCurve.plot(actCurve_Slow, 'k')
+axis_actCurve.plot(actCurve_Fast, 'r')
+axis_actCurve.hlines(50, xmin=0, xmax=1000, linestyles='dashed')
 
 fig.show()
+fig.savefig('activationMaps_murine.svg')
 print('Isotropic act. map plotted')
