@@ -26,46 +26,52 @@ def example_plot(axis):
 
 def generate_ActMap(conduction_v):
     # Dimensions of model data (px)
-    HEIGHT = 50
-    WIDTH = 50
+    HEIGHT = 200
+    WIDTH = 200
     # Allocate space for the Activation Map
-    actMap = np.zeros(shape=(WIDTH, HEIGHT))
-    # # Given conduction velocity (cm/s)
-    # CV = 50
+    act_map = np.zeros(shape=(WIDTH, HEIGHT))
     # Spatial resolution (cm/px)
-    resolution = 0.02   # 1 cm / 50 px
-    # Number of frames ()
-    frame_num = 10
-    # Sampling frequency (Hz)
-    sample_f = 500
+    resolution = 0.005   # 4 cm / 200 px
 
-    # Convert dimensions to cm
-    HEIGHT = HEIGHT * resolution
-    WIDTH = WIDTH * resolution
+    # Convert conduction velocity from cm/s to px/s
+    conduction_v = conduction_v / resolution
+    # # Convert dimensions to cm
+    # HEIGHT = HEIGHT * resolution
+    # WIDTH = WIDTH * resolution
 
     # Generate an isotropic activation map, radiating from the center
     origin_x, origin_y = WIDTH / 2, HEIGHT / 2
     # Assign an activation time to each pixel
-    for ix, iy in np.ndindex(actMap.shape):
+    for ix, iy in np.ndindex(act_map.shape):
         # Compute the distance from the center (cm)
         d = math.sqrt((abs(origin_x - ix) ** 2 + abs((origin_y - iy) ** 2)))
         # Assign the time associated with that distance from the point of activation
-        actMap[ix, iy] = d / conduction_v
-        # convert from seconds to ms
-        actMap[ix, iy] = actMap[ix, iy]*1000
+        act_map[ix, iy] = d / conduction_v
+        # Convert time from s to ms
+        act_map[ix, iy] = act_map[ix, iy] * 1000
     print('Isotropic act. map generated')
-    return actMap
+    return act_map
 
 
 def generate_ActCurve(actMap):
-    xbins = np.arange(0, actMap.max(), 1)
-    # TODO change 0.01 to min-diff of two actMap values? (temporal resolution)
+    # Frame rate (FPS)
+    fps = 500
+    # frames / ms
+    fpms = fps / 1000
+    # Number of frames
+    frames = int((np.nanmax(actMap) - np.nanmin(actMap)) * (1 / fpms))
+
+    # Bins for histogram calculation
+    xbins = np.linspace(start=0, stop=actMap.max(), num=frames)
     hist = np.histogram(actMap, xbins)
     # a = np.hstack((rng.normal(size=1000), rng.normal(loc=5, scale=2, size=1000)))
     # tissueact = 100 * np.cumsum(hist(tim,xbins))/allpts;
 
     tissueact = 100 * np.cumsum(hist[0]) / actMap.size
-    return tissueact
+
+    # A array for plotting the activation curve
+    x_axes = np.linspace(start=0, stop=actMap.max(), num=frames-1)
+    return x_axes, tissueact
 
 
 # Setup the figure
@@ -132,16 +138,16 @@ cb1 = plt.colorbar(img_actMap_Slow, cax=ax_ins1, orientation="horizontal")
 cb1.set_label('Activation Time (ms)', fontsize=8)
 
 # Generate activation curves
-actCurve_Fast = generate_ActCurve(actMap_Fast)
-actCurve_Slow = generate_ActCurve(actMap_Slow)
+actCurve_Fast_x, actCurve_Fast = generate_ActCurve(actMap_Fast)
+actCurve_Slow_x, actCurve_Slow = generate_ActCurve(actMap_Slow)
 # Plot activation curves
 axis_actCurve = fig.add_subplot(gs0[2])
 axis_actCurve.set_ylabel('Tissue Activation (%)', fontsize=10)
 axis_actCurve.spines['top'].set_visible(False)
 axis_actCurve.spines['right'].set_visible(False)
-axis_actCurve.plot(actCurve_Slow, 'k')
-axis_actCurve.plot(actCurve_Fast, 'r')
-axis_actCurve.hlines(50, xmin=0, xmax=1000, linestyles='dashed')
+axis_actCurve.plot(actCurve_Fast_x, actCurve_Fast, 'k')
+axis_actCurve.plot(actCurve_Slow_x, actCurve_Slow, 'r')
+axis_actCurve.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed')
 
 fig.show()
 fig.savefig('activationMaps_murine.svg')

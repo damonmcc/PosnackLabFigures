@@ -34,7 +34,6 @@ def generate_ActMap(conduction_v):
     # HEIGHT = HEIGHT * resolution
     # WIDTH = WIDTH * resolution
 
-
     # Generate an isotropic activation map, radiating from the center
     origin_x, origin_y = WIDTH / 2, HEIGHT / 2
     # Assign an activation time to each pixel
@@ -43,7 +42,7 @@ def generate_ActMap(conduction_v):
         d = math.sqrt((abs(origin_x - ix) ** 2 + abs((origin_y - iy) ** 2)))
         # Assign the time associated with that distance from the point of activation
         act_map[ix, iy] = d / conduction_v
-        # Convert time from s to ms?
+        # Convert time from s to ms
         act_map[ix, iy] = act_map[ix, iy] * 1000
     print('Isotropic act. map generated')
     return act_map
@@ -77,7 +76,7 @@ def generate_ActCurve(actMap, actMapMax):
     # frames / ms
     fpms = fps / 1000
     # Number of frames
-    frames = int((actMap.max() - actMap.min()) * (1 / fpms))
+    frames = int((np.nanmax(actMap) - np.nanmin(actMap)) * (1 / fpms))
 
     # Bins for histogram calculation
     xbins = np.linspace(start=0, stop=actMap.max(), num=frames)
@@ -129,10 +128,35 @@ axActConst_Pacing.set_title('Activation Constants', fontsize=12)
 actMap_Pacing_Fast = generate_ActMap(conduction_v=50)
 actMap_Pacing_Slow = generate_ActMap(conduction_v=40)
 # Age comparison section
-actMap_Ages_PFast = generate_ActMap(conduction_v=62)
-actMap_Ages_PSlow = generate_ActMap(conduction_v=60)
+# actMap_Ages_PFast = generate_ActMap(conduction_v=62)
+# actMap_Ages_PSlow = generate_ActMap(conduction_v=60)
 actMap_Ages_AFast = generate_ActMap(conduction_v=55)
 actMap_Ages_ASlow = generate_ActMap(conduction_v=35)
+
+# Import heart image
+# heart = np.fliplr(np.rot90(plt.imread('data/20190322-pigb/06-300_RH237_0001.tif')))
+# ret, heart_thresh = cv2.threshold(heart, 150, np.nan, cv2.THRESH_TOZERO)
+
+# Import Activation Maps
+# actMapIMPORT_Ages_PFast = np.loadtxt('data/20190717-rata/ActMap-01-250_Vm.csv',
+#                                      delimiter=',', skiprows=0)
+# actMapIMPORT_Ages_PSlow = np.loadtxt('data/20190717-rata/ActMap-03-150_Vm.csv',
+#                                      delimiter=',', skiprows=0)
+actMap_Ages_PFast = np.loadtxt('data/20190717-rata/ActMap-01-250_Vm.csv',
+                                     delimiter=',', skiprows=0)
+actMap_Ages_PSlow = np.loadtxt('data/20190717-rata/ActMap-03-150_Vm.csv',
+                                     delimiter=',', skiprows=0)
+# Crop imported activation maps
+h1_denom, h2_denom = 2.3, 1.18
+w1_denom, w2_denom = 3, 2
+h, w = actMap_Ages_PFast.shape
+h1, h2 = int(h / h1_denom), int(h / h2_denom)
+w1, w2 = int(w / w1_denom), int(w / w2_denom)
+actMap_Ages_PFast = actMap_Ages_PFast[h1:h2, w1:w2]
+h, w = actMap_Ages_PSlow.shape
+h1, h2 = int(h / h1_denom), int(h / h2_denom)
+w1, w2 = int(w / w1_denom), int(w / w2_denom)
+actMap_Ages_PSlow = actMap_Ages_PSlow[h1:h2, w1:w2]
 
 
 actMaps = [actMap_Pacing_Slow, actMap_Pacing_Fast,
@@ -145,7 +169,7 @@ for map in actMaps:
     print(np.nanmax(map))
     actMapMax = max(actMapMax, np.nanmax(map))
 # Round to the nearest X5.0?
-actMapMax = round(actMapMax + 2.6, -1)
+actMapMax = round(actMapMax + 2.6, 1)
 # Normalize across
 # cmap_norm = colors.Normalize(vmin=0, vmax=round(actMapMax + 1.1, -1))
 cmap_norm = colors.Normalize(vmin=0, vmax=actMapMax)
@@ -170,6 +194,7 @@ ax_ins1 = inset_axes(axActMap_Ages_AFast,
                      borderpad=0)
 cb1 = plt.colorbar(img_colormap, cax=ax_ins1, orientation="horizontal")
 cb1.set_label('Activation Time (ms)', fontsize=6)
+cb1.ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
 cb1.ax.xaxis.set_major_locator(ticker.MultipleLocator(10))
 cb1.ax.tick_params(labelsize=6)
 
@@ -195,7 +220,7 @@ axActCurve_Pacing.xaxis.set_major_locator(ticker.MultipleLocator(5))
 axActCurve_Ages.set_ylabel('Tissue Activation (%)', fontsize=10)
 axActCurve_Ages.spines['top'].set_visible(False)
 axActCurve_Ages.spines['right'].set_visible(False)
-axActCurve_Ages.plot(actCurve_Ages_PFast_x, actCurve_Ages_PFast, 'k-.')
+axActCurve_Ages.plot(actCurve_Ages_PFast_x, actCurve_Ages_PFast, 'r-.')
 axActCurve_Ages.plot(actCurve_Ages_PSlow_x, actCurve_Ages_PSlow, 'k--',)
 axActCurve_Ages.plot(actCurve_Ages_AFast_x, actCurve_Ages_AFast, 'r')
 axActCurve_Ages.plot(actCurve_Ages_ASlow_x, actCurve_Ages_ASlow, 'k')
