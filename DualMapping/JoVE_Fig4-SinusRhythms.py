@@ -49,20 +49,25 @@ def plot_heart(axis, heart_image, rois=None):
 
     # patch = Ellipse((width/2, height/2), width=width, height=height, transform=axis.transData)
     # img.set_clip_path(patch)
-    # # Scale Bar
-    # heart_scale = [67, 67]  # x, y (pixels/cm)
-    # heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
-    # 'lower right', pad=0.2, color='w', frameon=False,
-    # fontproperties=fm.FontProperties(size=7, weight='bold'))
-    # axis.add_artist(heart_scale_bar)
+    # Scale Bar
+    scale_px_cm = 1 / 0.0149
+    heart_scale = [scale_px_cm, scale_px_cm]  # x, y (pixels/cm)
+    heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
+                                      'lower right', pad=0.2, color='w', frameon=False,
+                                      fontproperties=fm.FontProperties(size=7, weight='bold'))
+    axis.add_artist(heart_scale_bar)
 
     return img
 
 
 def plot_trace(axis, data, imagej=False, fps=None, color='b',
-               x_start=0):
+               x_span=0, x_end=None):
     if imagej:
-        data_x = data[1 + x_start:, 0] - x_start             # All rows of the first column (skip X,Y header row)
+        if not x_end:
+            x_end = len(data)
+        x_start = x_end - x_span
+
+        data_x = data[x_start:x_end, 0] - x_start             # All rows of the first column (skip X,Y header row)
         if fps:
             # convert to ms
             data_x = ((data_x - 1) / fps) * 1000    # ensure range is 0 - max
@@ -75,7 +80,7 @@ def plot_trace(axis, data, imagej=False, fps=None, color='b',
         axis.xaxis.set_minor_locator(ticker.MultipleLocator(250))
         axis.tick_params(labelsize=6)
 
-        data_y_counts = data[1 + x_start:, 1].astype(int)     # rows of the first column (skip X,Y header row)
+        data_y_counts = data[x_start:x_end, 1].astype(int)     # rows of the first column (skip X,Y header row)
         # data_y_counts_delta = data_y.max() - data_y_.min()
         # MAX_COUNTS_16BIT
         # # Normalize each trace
@@ -237,37 +242,37 @@ axTracesNSR_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
 # axTracesNSR_Ca_RV.set_ylabel('RV', fontsize=10)
 # axTracesNSR_Ca_LV.set_ylabel('LV', fontsize=10)
 
-plot_trace(axTracesNSR_Vm_RV, TraceNSR_Vm_RV[1], imagej=True, fps=408, color='b', x_start=1024)
-plot_trace(axTracesNSR_Vm_RV_5x5, TraceNSR_Vm_RV[5], imagej=True, fps=408, color='b', x_start=1024)
+plot_trace(axTracesNSR_Vm_RV, TraceNSR_Vm_RV[1], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTracesNSR_Vm_RV_5x5, TraceNSR_Vm_RV[5], imagej=True, fps=408, color='b', x_span=1024)
 axTracesNSR_Vm_RV.set_xticklabels([])
 axTracesNSR_Vm_RV_5x5.set_xticklabels([])
-plot_trace(axTracesNSR_Vm_LV, TraceNSR_Vm_LV[1], imagej=True, fps=408, color='r', x_start=1024)
-plot_trace(axTracesNSR_Vm_LV_5x5, TraceNSR_Vm_LV[5], imagej=True, fps=408, color='r', x_start=1024)
+plot_trace(axTracesNSR_Vm_LV, TraceNSR_Vm_LV[1], imagej=True, fps=408, color='r', x_span=1024)
+plot_trace(axTracesNSR_Vm_LV_5x5, TraceNSR_Vm_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
-plot_trace(axTracesNSR_Ca_RV, TraceNSR_Ca_RV[1], imagej=True, fps=408, color='b', x_start=1024)
-plot_trace(axTracesNSR_Ca_RV_5x5, TraceNSR_Ca_RV[5], imagej=True, fps=408, color='b', x_start=1024)
+plot_trace(axTracesNSR_Ca_RV, TraceNSR_Ca_RV[1], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTracesNSR_Ca_RV_5x5, TraceNSR_Ca_RV[5], imagej=True, fps=408, color='b', x_span=1024)
 axTracesNSR_Ca_RV.set_xticklabels([])
 axTracesNSR_Ca_RV_5x5.set_xticklabels([])
-plot_trace(axTracesNSR_Ca_LV, TraceNSR_Ca_LV[1], imagej=True, fps=408, color='r', x_start=1024)
-plot_trace(axTracesNSR_Ca_LV_5x5, TraceNSR_Ca_LV[5], imagej=True, fps=408, color='r', x_start=1024)
+plot_trace(axTracesNSR_Ca_LV, TraceNSR_Ca_LV[1], imagej=True, fps=408, color='r', x_span=1024)
+plot_trace(axTracesNSR_Ca_LV_5x5, TraceNSR_Ca_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
 # Plot VF traces
 axTracesVF_Vm_RV.set_title('Single Pixel', fontsize=10)
 axTracesVF_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
 
-plot_trace(axTracesVF_Vm_RV, TraceVF_Vm_RV[1], imagej=True, fps=408, color='b', x_start=1024)
-plot_trace(axTracesVF_Vm_RV_5x5, TraceVF_Vm_RV[5], imagej=True, fps=408, color='b', x_start=1024)
+plot_trace(axTracesVF_Vm_RV, TraceVF_Vm_RV[1], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTracesVF_Vm_RV_5x5, TraceVF_Vm_RV[5], imagej=True, fps=408, color='b', x_span=1024)
 axTracesVF_Vm_RV.set_xticklabels([])
 axTracesVF_Vm_RV_5x5.set_xticklabels([])
-plot_trace(axTracesVF_Vm_LV, TraceVF_Vm_LV[1], imagej=True, fps=408, color='r', x_start=1024)
-plot_trace(axTracesVF_Vm_LV_5x5, TraceVF_Vm_LV[5], imagej=True, fps=408, color='r', x_start=1024)
+plot_trace(axTracesVF_Vm_LV, TraceVF_Vm_LV[1], imagej=True, fps=408, color='r', x_span=1024)
+plot_trace(axTracesVF_Vm_LV_5x5, TraceVF_Vm_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
-plot_trace(axTracesVF_Ca_RV, TraceVF_Ca_RV[1], imagej=True, fps=408, color='b', x_start=1024)
-plot_trace(axTracesVF_Ca_RV_5x5, TraceVF_Ca_RV[5], imagej=True, fps=408, color='b', x_start=1024)
+plot_trace(axTracesVF_Ca_RV, TraceVF_Ca_RV[1], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTracesVF_Ca_RV_5x5, TraceVF_Ca_RV[5], imagej=True, fps=408, color='b', x_span=1024)
 axTracesVF_Ca_RV.set_xticklabels([])
 axTracesVF_Ca_RV_5x5.set_xticklabels([])
-plot_trace(axTracesVF_Ca_LV, TraceVF_Ca_LV[1], imagej=True, fps=408, color='r', x_start=1024)
-plot_trace(axTracesVF_Ca_LV_5x5, TraceVF_Ca_LV[5], imagej=True, fps=408, color='r', x_start=1024)
+plot_trace(axTracesVF_Ca_LV, TraceVF_Ca_LV[1], imagej=True, fps=408, color='r', x_span=1024)
+plot_trace(axTracesVF_Ca_LV_5x5, TraceVF_Ca_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
 
 # Fill rest with example plots
