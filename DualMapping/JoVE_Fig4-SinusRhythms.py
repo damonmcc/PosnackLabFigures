@@ -38,13 +38,13 @@ def plot_heart(axis, heart_image, rois=None):
     # Setup plot
     height, width, = heart_image.shape[0], heart_image.shape[1]  # X, Y flipped due to rotation
     axis.axis('off')
-    img = axis.imshow(heart_image[:, :512], cmap='bone')
+    img = axis.imshow(heart_image, cmap='bone')
 
     if rois:
         # Create ROIs and get colors of their pixels
         for idx, roi in enumerate(rois):
-            roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc='w',
-                                ec=roi_colors[idx], lw=2)
+            roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc=None,
+                                ec=roi_colors[idx], lw=1)
             axis.add_artist(roi_circle)
 
     # patch = Ellipse((width/2, height/2), width=width, height=height, transform=axis.transData)
@@ -110,7 +110,20 @@ def example_plot(axis):
 
 # Build figure
 fig = plt.figure(figsize=(8, 5))  # _ x _ inch page
-gs0 = fig.add_gridspec(1, 3, width_ratios=[0.2, 0.4, 0.4])  # Overall: ? row, ? columns
+gsfig = fig.add_gridspec(2, 1, height_ratios=[0.07, 0.93])  # Overall: ? row, ? columns
+
+# Top row for Title-ish text
+# gsText = gsfig[0].subgridspec(1, 1)  # Overall: ? row, ? columns
+axText = fig.add_subplot(gsfig[0])  # Overall: ? row, ? columns
+axText.axis('off')
+# axText.set_title('Sinus Rhythm', fontsize=18)
+axText.text(0.425, 1, 'Sinus Rhythm',
+            ha='center', va='top', fontsize=16)
+axText.text(0.825, 1, 'VF',
+            ha='center', va='top', fontsize=16)
+
+# 3 columns for data
+gs0 = gsfig[1].subgridspec(1, 3, width_ratios=[0.2, 0.4, 0.4])  # Overall: ? row, ? columns
 
 # Build heart sections
 gsImages = gs0[0].subgridspec(2, 1)  # 2 rows, 1 columns for Activation Maps
@@ -152,14 +165,23 @@ axTracesVF_Ca_RV_5x5, axTracesVF_Ca_LV_5x5 = fig.add_subplot(gsTracesVF_Ca[1]), 
 
 
 # Import heart image
+heart_NSR_Vm = np.fliplr(np.rot90(plt.imread('data/20190322-piga/18-NSR_Vm_0001.tif')))
+heart_NSR_Ca = np.fliplr(np.rot90(plt.imread('data/20190322-piga/18-NSR_Ca_0001.tif')))
 heart_VF_Vm = np.fliplr(np.rot90(plt.imread('data/20190322-piga/19-VFIB_Vm_0001.tif')))
-# heart_VF_Vm = np.fliplr(np.rot90(plt.imread('data/20190322-piga/19-VFIB_Vm_0001.tif')[720-512:, :]))
 heart_VF_Ca = np.fliplr(np.rot90(plt.imread('data/20190322-piga/19-VFIB_Ca_0001.tif')))
 # ret, heart_thresh = cv2.threshold(heart, 150, np.nan, cv2.THRESH_TOZERO)
 
 
 # Create region of interest (ROI)
 # X and Y flipped and subtracted from W and H, due to image rotation
+W, H = heart_NSR_Vm.shape
+# RoisNSR_Vm = [{'y': W - 294, 'x': H - 124, 'r': 5},
+#              {'y': W - 216, 'x': H - 286, 'r': 5}]
+RoisNSR_Vm = [{'y': W - 124, 'x': H - 294, 'r': 5},
+              {'y': W - 286, 'x': H - 216, 'r': 5}]
+RoisNSR_Ca = [{'y': W - 122, 'x': H - 318, 'r': 5},
+              {'y': W - 284, 'x': H - 240, 'r': 5}]
+
 W, H = heart_VF_Vm.shape
 RoisVF_Vm = [{'y': W - 312, 'x': H - 550, 'r': 5},
              {'y': W - 390, 'x': H - 384, 'r': 5}]
@@ -171,6 +193,18 @@ RoisVF_Ca = [{'y': W - 336, 'x': H - 548, 'r': 5},
 # Import Traces
 # Load signal data, columns: time (s), fluorescence (norm)
 # Pair with stim activation time used for activation maps
+# NSR
+TraceNSR_Vm_RV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Vm_1x1-294x124.csv', delimiter=','),
+                  5: np.genfromtxt('data/20190322-piga/18-NSR_Vm_5x5-294x124.csv', delimiter=',')}
+TraceNSR_Vm_LV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Vm_1x1-216x286.csv', delimiter=','),
+                  5: np.genfromtxt('data/20190322-piga/18-NSR_Vm_5x5-216x286.csv', delimiter=',')}
+
+TraceNSR_Ca_RV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Ca_1x1-318x222.csv', delimiter=','),
+                  5: np.genfromtxt('data/20190322-piga/18-NSR_Ca_5x5-318x222.csv', delimiter=',')}
+TraceNSR_Ca_LV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Ca_1x1-240x284.csv', delimiter=','),
+                  5: np.genfromtxt('data/20190322-piga/18-NSR_Ca_5x5-240x284.csv', delimiter=',')}
+
+# VF
 TraceVF_Vm_RV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_1x1-390x384.csv', delimiter=','),
                  5: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_5x5-390x384.csv', delimiter=',')}
 TraceVF_Vm_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_1x1-312x550.csv', delimiter=','),
@@ -183,19 +217,39 @@ TraceVF_Ca_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_1x1-336x548.csv
 
 
 # Plot heart images
-plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, rois=RoisVF_Vm)
-axImage_Vm.set_title('Vm', fontsize=18)
-plot_heart(axis=axImage_Ca, heart_image=heart_VF_Ca, rois=RoisVF_Ca)
-axImage_Ca.set_title('Ca', fontsize=18)
+axImage_Vm.set_title('Vm', fontsize=16)
+plot_heart(axis=axImage_Vm, heart_image=heart_NSR_Vm, rois=RoisNSR_Vm)
+# plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, rois=RoisVF_Vm)
+axImage_Ca.set_title('Ca', fontsize=16)
+plot_heart(axis=axImage_Ca, heart_image=heart_NSR_Ca, rois=RoisNSR_Vm)
+# plot_heart(axis=axImage_Ca, heart_image=heart_VF_Ca, rois=RoisVF_Ca)
 
 
 # Plot NSR traces
 axTracesNSR_Vm_RV.set_title('Single Pixel', fontsize=10)
 axTracesNSR_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
-axTracesNSR_Vm_RV.set_ylabel('RV', fontsize=10)
-axTracesNSR_Vm_LV.set_ylabel('LV', fontsize=10)
-axTracesNSR_Ca_RV.set_ylabel('RV', fontsize=10)
-axTracesNSR_Ca_LV.set_ylabel('LV', fontsize=10)
+# axTracesNSR_Vm_RV.set_ylabel('RV', fontsize=10)
+# axTracesNSR_Vm_RV.text(1.5, 0.5, 'text 45', rotation=45)
+# axTracesNSR_Vm_LV.text(1.5, 0.5, 'text 45', rotation=45)
+# axTracesNSR_Ca_RV.text(1.5, 0.5, 'text 45', rotation=45)
+# axTracesNSR_Ca_LV.text(1.5, 0.5, 'text 45', rotation=45)
+# axTracesNSR_Vm_LV.set_ylabel('LV', fontsize=10)
+# axTracesNSR_Ca_RV.set_ylabel('RV', fontsize=10)
+# axTracesNSR_Ca_LV.set_ylabel('LV', fontsize=10)
+
+plot_trace(axTracesNSR_Vm_RV, TraceNSR_Vm_RV[1], imagej=True, fps=408, color='b', x_start=1024)
+plot_trace(axTracesNSR_Vm_RV_5x5, TraceNSR_Vm_RV[5], imagej=True, fps=408, color='b', x_start=1024)
+axTracesNSR_Vm_RV.set_xticklabels([])
+axTracesNSR_Vm_RV_5x5.set_xticklabels([])
+plot_trace(axTracesNSR_Vm_LV, TraceNSR_Vm_LV[1], imagej=True, fps=408, color='r', x_start=1024)
+plot_trace(axTracesNSR_Vm_LV_5x5, TraceNSR_Vm_LV[5], imagej=True, fps=408, color='r', x_start=1024)
+
+plot_trace(axTracesNSR_Ca_RV, TraceNSR_Ca_RV[1], imagej=True, fps=408, color='b', x_start=1024)
+plot_trace(axTracesNSR_Ca_RV_5x5, TraceNSR_Ca_RV[5], imagej=True, fps=408, color='b', x_start=1024)
+axTracesNSR_Ca_RV.set_xticklabels([])
+axTracesNSR_Ca_RV_5x5.set_xticklabels([])
+plot_trace(axTracesNSR_Ca_LV, TraceNSR_Ca_LV[1], imagej=True, fps=408, color='r', x_start=1024)
+plot_trace(axTracesNSR_Ca_LV_5x5, TraceNSR_Ca_LV[5], imagej=True, fps=408, color='r', x_start=1024)
 
 # Plot VF traces
 axTracesVF_Vm_RV.set_title('Single Pixel', fontsize=10)
@@ -203,28 +257,30 @@ axTracesVF_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
 
 plot_trace(axTracesVF_Vm_RV, TraceVF_Vm_RV[1], imagej=True, fps=408, color='b', x_start=1024)
 plot_trace(axTracesVF_Vm_RV_5x5, TraceVF_Vm_RV[5], imagej=True, fps=408, color='b', x_start=1024)
-plot_trace(axTracesVF_Ca_RV, TraceVF_Ca_RV[1], imagej=True, fps=408, color='b', x_start=1024)
-plot_trace(axTracesVF_Ca_RV_5x5, TraceVF_Ca_RV[5], imagej=True, fps=408, color='b', x_start=1024)
-
+axTracesVF_Vm_RV.set_xticklabels([])
+axTracesVF_Vm_RV_5x5.set_xticklabels([])
 plot_trace(axTracesVF_Vm_LV, TraceVF_Vm_LV[1], imagej=True, fps=408, color='r', x_start=1024)
 plot_trace(axTracesVF_Vm_LV_5x5, TraceVF_Vm_LV[5], imagej=True, fps=408, color='r', x_start=1024)
+
+plot_trace(axTracesVF_Ca_RV, TraceVF_Ca_RV[1], imagej=True, fps=408, color='b', x_start=1024)
+plot_trace(axTracesVF_Ca_RV_5x5, TraceVF_Ca_RV[5], imagej=True, fps=408, color='b', x_start=1024)
+axTracesVF_Ca_RV.set_xticklabels([])
+axTracesVF_Ca_RV_5x5.set_xticklabels([])
 plot_trace(axTracesVF_Ca_LV, TraceVF_Ca_LV[1], imagej=True, fps=408, color='r', x_start=1024)
 plot_trace(axTracesVF_Ca_LV_5x5, TraceVF_Ca_LV[5], imagej=True, fps=408, color='r', x_start=1024)
 
 
-
-
 # Fill rest with example plots
 # NSR
-example_plot(axTracesNSR_Vm_RV)
-example_plot(axTracesNSR_Vm_LV)
-example_plot(axTracesNSR_Vm_RV_5x5)
-example_plot(axTracesNSR_Vm_LV_5x5)
+# example_plot(axTracesNSR_Vm_RV)
+# example_plot(axTracesNSR_Vm_LV)
+# example_plot(axTracesNSR_Vm_RV_5x5)
+# example_plot(axTracesNSR_Vm_LV_5x5)
 
-example_plot(axTracesNSR_Ca_RV)
-example_plot(axTracesNSR_Ca_LV)
-example_plot(axTracesNSR_Ca_RV_5x5)
-example_plot(axTracesNSR_Ca_LV_5x5)
+# example_plot(axTracesNSR_Ca_RV)
+# example_plot(axTracesNSR_Ca_LV)
+# example_plot(axTracesNSR_Ca_RV_5x5)
+# example_plot(axTracesNSR_Ca_LV_5x5)
 
 # VF
 # example_plot(axTracesVF_Vm_RV)
