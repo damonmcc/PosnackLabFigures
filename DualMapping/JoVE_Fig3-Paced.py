@@ -13,6 +13,7 @@ import warnings
 
 MAX_COUNTS_16BIT = 65536
 roi_colors = ['b', 'r', 'k']
+signal_colors = ['#bf8637', '#bfbf37']  # Vm: orange, Ca: yellow
 
 
 def plot_heart(axis, heart_image, rois=None):
@@ -59,8 +60,8 @@ def plot_heart(axis, heart_image, rois=None):
     return img
 
 
-def plot_trace(axis, data, imagej=False, fps=None, color='b',
-               x_span=0, x_end=None):
+def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
+               norm=False, invert=False, color='b',):
     if imagej:
         if not x_end:
             x_end = len(data)
@@ -76,16 +77,23 @@ def plot_trace(axis, data, imagej=False, fps=None, color='b',
         # axis.xaxis.set_major_locator(ticker.AutoLocator())
         # axis.xaxis.set_minor_locator(ticker.AutoMinorLocator())
         axis.xaxis.set_major_locator(ticker.MultipleLocator(1000))
-        axis.xaxis.set_minor_locator(ticker.MultipleLocator(250))
+        axis.xaxis.set_minor_locator(ticker.MultipleLocator(int(1000/4)))
         axis.tick_params(labelsize=6)
 
         data_y_counts = data[x_start:x_end, 1].astype(int)     # rows of the first column (skip X,Y header row)
         # data_y_counts_delta = data_y.max() - data_y_.min()
         # MAX_COUNTS_16BIT
-        # # Normalize each trace
-        # data_min, data_max = np.nanmin(trace), np.nanmax(trace)
-        # trace = np.interp(trace, (data_min, data_max), (0, 1))
         data_y = data_y_counts
+
+        if norm:
+            # # Normalize each trace
+            data_min, data_max = np.nanmin(data_y), np.nanmax(data_y)
+            data_y = np.interp(data_y, (data_min, data_max), (0, 1))
+            if invert:
+                data_y = 1 - data_y  # Invert a normalized signal
+        else:
+            if invert:
+                print('!***! Can\'t invert a non-normalized trace!')
 
         ylim = [data_y.min(), data_y.max()]
         axis.set_ylim(ylim)
@@ -95,9 +103,25 @@ def plot_trace(axis, data, imagej=False, fps=None, color='b',
         # axis.yaxis.set_major_locator(ticker.AutoLocator())
         # axis.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 
-        axis.plot(data_x, data_y, color=color, linewidth=0.1)
+        axis.plot(data_x, data_y, color=color, linewidth=0.5)
     else:
-        axis.plot(data, color=color, linewidth=0.1)
+        axis.plot(data, color=color, linewidth=0.5)
+
+
+def plot_traceOverlay(axis, trace_vm, trace_ca):
+    # Normalize and Plot a Vm and a Ca trace on the same plot
+    plot_trace(axis, trace_vm, imagej=True, fps=408, x_span=256,
+               norm=True, invert=True, color=signal_colors[0])
+    plot_trace(axis, trace_ca, imagej=True, fps=408, x_span=256,
+               norm=True, color=signal_colors[1])
+
+    axis.xaxis.set_major_locator(ticker.MultipleLocator(100))
+    axis.xaxis.set_minor_locator(ticker.MultipleLocator((int(100/4))))
+    # axis.set_yticks([])
+    axis.spines['right'].set_visible(False)
+    axis.spines['left'].set_visible(False)
+    axis.spines['top'].set_visible(False)
+    # axis.spines['bottom'].set_visible(False)
 
 
 def example_plot(axis):
@@ -175,27 +199,40 @@ plot_heart(axis=axImage_Ca, heart_image=heart_Ca, rois=Rois_Ca)
 
 # Import Traces
 # Load signal data, columns: index, fluorescence (counts)
-Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-156x250.csv', delimiter=','),
+Trace_Vm_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-240x114.csv', delimiter=','),
+               5: np.genfromtxt('data/20190322-pigb/06-300_Vm_5x5-156x250.csv', delimiter=',')}
+Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-240x114.csv', delimiter=','),
                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_5x5-156x250.csv', delimiter=',')}
 
-Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-156x250.csv', delimiter=','),
+Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-240x114.csv', delimiter=','),
+               5: np.genfromtxt('data/20190322-pigb/06-300_Ca_5x5-156x250.csv', delimiter=',')}
+Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-240x114.csv', delimiter=','),
                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_5x5-156x250.csv', delimiter=',')}
 # Plot paced traces
 axTraces_Vm_RV.set_title('Single Pixel', fontsize=10)
 axTraces_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
 
+plot_trace(axTraces_Vm_RV, Trace_Vm_RV[1], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTraces_Vm_RV_5x5, Trace_Vm_RV[5], imagej=True, fps=408, color='b', x_span=1024)
 axTraces_Vm_RV.set_xticklabels([])
 axTraces_Vm_RV_5x5.set_xticklabels([])
 plot_trace(axTraces_Vm_LV, Trace_Vm_LV[1], imagej=True, fps=408, color='r', x_span=1024)
 plot_trace(axTraces_Vm_LV_5x5, Trace_Vm_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
 
+plot_trace(axTraces_Ca_RV, Trace_Ca_RV[1], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTraces_Ca_RV_5x5, Trace_Ca_RV[5], imagej=True, fps=408, color='b', x_span=1024)
 axTraces_Ca_RV.set_xticklabels([])
 axTraces_Ca_RV_5x5.set_xticklabels([])
 plot_trace(axTraces_Ca_LV, Trace_Ca_LV[1], imagej=True, fps=408, color='r', x_span=1024)
 plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
 # Plot Analysis Section
+# Plot trace overlay
+# plot_trace(axTracesOverlay, Trace_Vm_LV[5], imagej=True, fps=408, color='r', x_span=256)
+# plot_trace(axTracesOverlay, Trace_Ca_LV[5], imagej=True, fps=408, color='r', x_span=256)
+plot_traceOverlay(axTracesOverlay, trace_vm=Trace_Vm_LV[5], trace_ca=Trace_Ca_LV[5])
+# Plot maps
 axMap_ActVm.set_title('Vm Act.', fontsize=8)
 axMap_ActCa.set_title('Ca Act.', fontsize=8)
 axMap_APD.set_title('APD-80', fontsize=8)
@@ -207,17 +244,17 @@ axMap_CAD.set_title('CAD-80.', fontsize=8)
 # example_plot(axImage_Vm)
 # example_plot(axImage_Ca)
 
-example_plot(axTraces_Vm_RV)
+# example_plot(axTraces_Vm_RV)
 # example_plot(axTraces_Vm_LV)
-example_plot(axTraces_Vm_RV_5x5)
+# example_plot(axTraces_Vm_RV_5x5)
 # example_plot(axTraces_Vm_LV_5x5)
-example_plot(axTraces_Ca_RV)
+# example_plot(axTraces_Ca_RV)
 # example_plot(axTraces_Ca_LV)
-example_plot(axTraces_Ca_RV_5x5)
+# example_plot(axTraces_Ca_RV_5x5)
 # example_plot(axTraces_Ca_LV_5x5)
 
 # Analysis
-example_plot(axTracesOverlay)
+# example_plot(axTracesOverlay)
 
 example_plot(axMap_ActVm)
 example_plot(axMap_ActCa)
