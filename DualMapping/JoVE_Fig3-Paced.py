@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.signal as sig
 from decimal import *
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
@@ -31,6 +32,8 @@ def plot_heart(axis, heart_image, rois=None):
         The first two dimensions (M, N) define the rows and columns of
         the image.
 
+    rois :
+
     Returns
     -------
     image : `~matplotlib.image.AxesImage`
@@ -61,7 +64,7 @@ def plot_heart(axis, heart_image, rois=None):
 
 
 def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
-               norm=False, invert=False, color='b',):
+               norm=False, invert=False, filter_lp=False, color='b',):
     if imagej:
         if not x_end:
             x_end = len(data)
@@ -85,6 +88,18 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         # MAX_COUNTS_16BIT
         data_y = data_y_counts
 
+        if filter_lp:
+            print('* Filtering data: Low Pass')
+            # TODO verify this isn't magic
+            dt = 1 / 408
+            freq = 50
+
+            fs = 1 / (dt)
+            Wn = (freq / (fs / 2))
+            [b, a] = sig.butter(5, Wn)
+            data_y = sig.filtfilt(b, a, data_y)
+            print('* Data Filtered')
+
         if norm:
             # # Normalize each trace
             data_min, data_max = np.nanmin(data_y), np.nanmax(data_y)
@@ -94,6 +109,7 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         else:
             if invert:
                 print('!***! Can\'t invert a non-normalized trace!')
+
 
         ylim = [data_y.min(), data_y.max()]
         axis.set_ylim(ylim)
@@ -109,12 +125,13 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
 
 
 def plot_traceOverlay(axis, trace_vm, trace_ca):
-    # Normalize and Plot a Vm and a Ca trace on the same plot
+    # Normalize, Filter, and Plot a Vm and a Ca trace on the same plot
     idx_end = len(trace_vm) - 30
+
     plot_trace(axis, trace_vm, imagej=True, fps=408, x_span=256, x_end=idx_end,
-               norm=True, invert=True, color=signal_colors[0])
+               norm=True, invert=True, filter_lp=True, color=signal_colors[0])
     plot_trace(axis, trace_ca, imagej=True, fps=408, x_span=256, x_end=idx_end,
-               norm=True, color=signal_colors[1])
+               norm=True, filter_lp=True, color=signal_colors[1])
 
     # axis.xaxis.set_major_locator(ticker.MultipleLocator(100))
     # axis.xaxis.set_minor_locator(ticker.MultipleLocator((int(100/4))))
