@@ -13,7 +13,7 @@ import warnings
 
 MAX_COUNTS_16BIT = 65536
 roi_colors = ['b', 'r', 'k']
-signal_colors = ['#bf8637', '#bfbf37']  # Vm: orange, Ca: yellow
+signal_colors = ['#db7a59', '#236C46']  # Vm: orange, Ca: green
 
 
 def plot_heart(axis, heart_image, rois=None):
@@ -110,18 +110,63 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
 
 def plot_traceOverlay(axis, trace_vm, trace_ca):
     # Normalize and Plot a Vm and a Ca trace on the same plot
-    plot_trace(axis, trace_vm, imagej=True, fps=408, x_span=256,
+    idx_end = len(trace_vm) - 30
+    plot_trace(axis, trace_vm, imagej=True, fps=408, x_span=256, x_end=idx_end,
                norm=True, invert=True, color=signal_colors[0])
-    plot_trace(axis, trace_ca, imagej=True, fps=408, x_span=256,
+    plot_trace(axis, trace_ca, imagej=True, fps=408, x_span=256, x_end=idx_end,
                norm=True, color=signal_colors[1])
 
-    axis.xaxis.set_major_locator(ticker.MultipleLocator(100))
-    axis.xaxis.set_minor_locator(ticker.MultipleLocator((int(100/4))))
-    # axis.set_yticks([])
+    # axis.xaxis.set_major_locator(ticker.MultipleLocator(100))
+    # axis.xaxis.set_minor_locator(ticker.MultipleLocator((int(100/4))))
+
+    axis.xaxis.set_major_locator(ticker.NullLocator())
+    axis.xaxis.set_minor_locator(ticker.NullLocator())
+    axis.set_xticks([])
+    axis.set_xticklabels([])
+    axis.yaxis.set_major_locator(ticker.NullLocator())
+    axis.yaxis.set_minor_locator(ticker.NullLocator())
+    axis.set_yticks([])
     axis.spines['right'].set_visible(False)
     axis.spines['left'].set_visible(False)
     axis.spines['top'].set_visible(False)
-    # axis.spines['bottom'].set_visible(False)
+    axis.spines['bottom'].set_visible(False)
+    # ECG Scale: ms and Norm. Fluor. bars forming an L
+    ECGScaleTime = [100, 250 / 1000]  # 100 ms, 0.25 Norm. Fluor.
+    ECGScaleOrigin = [axis.get_xlim()[1] - 1.5 * ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
+    # ECGScaleOrigin = [axis.get_xlim()[1] - 20, axis.get_ylim()[0] + 0.3]
+    ECGScaleOriginPad = [2, 0.05]
+    # Time scale bar
+    axis.plot([ECGScaleOrigin[0], ECGScaleOrigin[0] + ECGScaleTime[0]],
+              [ECGScaleOrigin[1], ECGScaleOrigin[1]],
+              "k-", linewidth=1)
+    axis.text(ECGScaleOrigin[0], ECGScaleOrigin[1] - ECGScaleOriginPad[1],
+              str(ECGScaleTime[0]) + 'ms',
+              ha='left', va='top', fontsize=7, fontweight='bold')
+
+
+def plot_ActMap(axis, actMap, cmap, norm):
+    # Setup plot
+    height, width, = actMap.shape[0], actMap.shape[1]  # X, Y flipped due to rotation
+    x_crop, y_crop = [0, width], [height, 150]
+
+    # axis.axis('off')
+    axis.spines['right'].set_visible(False)
+    axis.spines['left'].set_visible(False)
+    axis.spines['top'].set_visible(False)
+    axis.spines['bottom'].set_visible(False)
+    axis.set_yticks([])
+    axis.set_yticklabels([])
+    axis.set_xticks([])
+    axis.set_xticklabels([])
+
+    axis.set_xlim(x_crop)
+    axis.set_ylim(y_crop)
+
+    # Plot Activation Map
+    img = axis.imshow(actMap, norm=norm, cmap=cmap)
+
+    return img
+
 
 
 def example_plot(axis):
@@ -219,7 +264,6 @@ axTraces_Vm_RV_5x5.set_xticklabels([])
 plot_trace(axTraces_Vm_LV, Trace_Vm_LV[1], imagej=True, fps=408, color='r', x_span=1024)
 plot_trace(axTraces_Vm_LV_5x5, Trace_Vm_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
-
 plot_trace(axTraces_Ca_RV, Trace_Ca_RV[1], imagej=True, fps=408, color='b', x_span=1024)
 plot_trace(axTraces_Ca_RV_5x5, Trace_Ca_RV[5], imagej=True, fps=408, color='b', x_span=1024)
 axTraces_Ca_RV.set_xticklabels([])
@@ -232,9 +276,28 @@ plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, color='r', 
 # plot_trace(axTracesOverlay, Trace_Vm_LV[5], imagej=True, fps=408, color='r', x_span=256)
 # plot_trace(axTracesOverlay, Trace_Ca_LV[5], imagej=True, fps=408, color='r', x_span=256)
 plot_traceOverlay(axTracesOverlay, trace_vm=Trace_Vm_LV[5], trace_ca=Trace_Ca_LV[5])
+
+# Import maps
+actMapVm = np.fliplr(np.rot90(np.loadtxt('data/20190322-pigb/ActMaps/ActMap-06-300_Vm.csv',
+                                                delimiter=',', skiprows=0)))
+actMapCa = np.fliplr(np.rot90(np.loadtxt('data/20190322-pigb/ActMaps/ActMap-06-300_Vm.csv',
+                                                delimiter=',', skiprows=0)))
+# Determine max value across all activation maps
+actMapMax = 0
+print('Activation Map max values:')
+actMapMax = max(np.nanmax(actMapVm), np.nanmax(actMapCa))
+# Create normalization range for all activation maps (round up to nearest 10)
+print('Activation Maps max value: ', actMapMax)
+cmapNorm_actMaps = colors.Normalize(vmin=0, vmax=round(actMapMax + 5.1, -1))
+cmap_actMapVm = scm.lajolla
+cmap_actMapCa = scm.bamako.reversed()
+
 # Plot maps
-axMap_ActVm.set_title('Vm Act.', fontsize=8)
-axMap_ActCa.set_title('Ca Act.', fontsize=8)
+axMap_ActVm.set_title('Activation', fontsize=8)
+plot_ActMap(axis=axMap_ActVm, actMap=actMapVm, cmap=cmap_actMapVm, norm=cmapNorm_actMaps)
+axMap_ActVm.set_ylabel('Vm', fontsize=8)
+plot_ActMap(axis=axMap_ActCa, actMap=actMapVm, cmap=cmap_actMapCa, norm=cmapNorm_actMaps)
+axMap_ActCa.set_ylabel('Ca', fontsize=8)
 axMap_APD.set_title('APD-80', fontsize=8)
 axMap_CAD.set_title('CAD-80.', fontsize=8)
 
