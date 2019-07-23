@@ -1,4 +1,3 @@
-
 import numpy as np
 from decimal import *
 import matplotlib.pyplot as plt
@@ -81,12 +80,13 @@ def plot_trace(axis, data, imagej=False, fps=None, color='b',
         axis.tick_params(labelsize=6)
 
         data_y_counts = data[x_start:x_end, 1].astype(int)     # rows of the first column (skip X,Y header row)
+        counts_min = data_y_counts.min()
         # data_y_counts_delta = data_y.max() - data_y_.min()
         # MAX_COUNTS_16BIT
         # # Normalize each trace
         # data_min, data_max = np.nanmin(trace), np.nanmax(trace)
         # trace = np.interp(trace, (data_min, data_max), (0, 1))
-        data_y = data_y_counts
+        data_y = data_y_counts - counts_min
 
         ylim = [data_y.min(), data_y.max()]
         axis.set_ylim(ylim)
@@ -196,8 +196,7 @@ RoisVF_Ca = [{'y': W - 336, 'x': H - 548, 'r': 5},
 
 
 # Import Traces
-# Load signal data, columns: time (s), fluorescence (norm)
-# Pair with stim activation time used for activation maps
+# Load signal data, columns: index, fluorescence (counts)
 # NSR
 TraceNSR_Vm_RV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Vm_1x1-294x124.csv', delimiter=','),
                   5: np.genfromtxt('data/20190322-piga/18-NSR_Vm_5x5-294x124.csv', delimiter=',')}
