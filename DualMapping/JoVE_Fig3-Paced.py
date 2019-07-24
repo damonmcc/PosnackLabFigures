@@ -91,7 +91,6 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
 
         if filter_lp:
             print('* Filtering data: Low Pass')
-            # TODO verify this isn't magic
             dt = 1 / 408
             freq = 100
 
@@ -260,9 +259,7 @@ heart_Ca = np.rot90(plt.imread('data/20190322-pigb/01-350_Ca_0001.tif'))
 H, W = heart_Vm.shape
 Rois_Vm = [{'y': H - 398, 'x': 206, 'r': 15},
            {'y': H - 198, 'x': 324, 'r': 15}]
-# Rois_Ca = Rois_Vm
-Rois_Ca = [{'y': H - 440, 'x': 206, 'r': 15},
-           {'y': H - 240, 'x': 324, 'r': 15}]
+Rois_Ca = Rois_Vm
 
 # Plot heart images
 axImage_Vm.set_title('Vm', fontsize=16)
@@ -273,33 +270,15 @@ plot_heart(axis=axImage_Ca, heart_image=heart_Ca, rois=Rois_Ca)
 
 # Import Traces
 # Load signal data, columns: index, fluorescence (counts)
-# Trace_Vm_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-240x114.csv', delimiter=','),
-#                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_5x5-156x250.csv', delimiter=',')}
-# Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-240x114.csv', delimiter=','),
-#                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_5x5-156x250.csv', delimiter=',')}
-#
-# Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-240x114.csv', delimiter=','),
-#                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_5x5-156x250.csv', delimiter=',')}
-# Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-240x114.csv', delimiter=','),
-#                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_5x5-156x250.csv', delimiter=',')}
-# Trace_Vm_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_15x15-234x100.csv', delimiter=','),
-#                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_30x30-234x100.csv', delimiter=',')}
-# Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_15x15-218x272.csv', delimiter=','),
-#                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_30x30-218x272.csv', delimiter=',')}
-#
-# Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_15x15-234x100.csv', delimiter=','),
-#                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_30x30-234x100.csv', delimiter=',')}
-# Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_15x15-218x272.csv', delimiter=','),
-#                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_30x30-218x272.csv', delimiter=',')}
 Trace_Vm_RV = {1: np.genfromtxt('data/20190322-pigb/01-350_Vm_15x15-398x206.csv', delimiter=','),
                5: np.genfromtxt('data/20190322-pigb/01-350_Vm_30x30-398x206.csv', delimiter=',')}
 Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/01-350_Vm_15x15-198x324.csv', delimiter=','),
                5: np.genfromtxt('data/20190322-pigb/01-350_Vm_30x30-198x324.csv', delimiter=',')}
 
-Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/01-350_Ca_15x15-440x206.csv', delimiter=','),
-               5: np.genfromtxt('data/20190322-pigb/01-350_Ca_30x30-440x206.csv', delimiter=',')}
-Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/01-350_Ca_15x15-240x324.csv', delimiter=','),
-               5: np.genfromtxt('data/20190322-pigb/01-350_Ca_30x30-240x324.csv', delimiter=',')}
+Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/01-350_Ca_15x15-398x206.csv', delimiter=','),
+               5: np.genfromtxt('data/20190322-pigb/01-350_Ca_30x30-398x206.csv', delimiter=',')}
+Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/01-350_Ca_15x15-198x324.csv', delimiter=','),
+               5: np.genfromtxt('data/20190322-pigb/01-350_Ca_30x30-198x324.csv', delimiter=',')}
 # Plot paced traces
 axTraces_Vm_RV.set_title('15x15 Pixel', fontsize=10)
 axTraces_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=10)
@@ -320,8 +299,6 @@ plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, color='r', 
 
 # Plot Analysis Section
 # Plot trace overlay
-# plot_trace(axTracesOverlay, Trace_Vm_LV[5], imagej=True, fps=408, color='r', x_span=256)
-# plot_trace(axTracesOverlay, Trace_Ca_LV[5], imagej=True, fps=408, color='r', x_span=256)
 plot_trace_overlay(axTracesOverlay, trace_vm=Trace_Vm_LV[5], trace_ca=Trace_Ca_LV[5])
 
 # Import maps
@@ -345,8 +322,6 @@ axMap_ActVm.set_ylabel('Vm', fontsize=8)
 plot_actmap(axis=axMap_ActCa, actmap=actMapVm, cmap=cmap_actMapCa, norm=cmapNorm_actMaps)
 axMap_ActCa.set_ylabel('Ca', fontsize=8)
 axMap_APD.set_title('Duration (80%)', fontsize=8)
-# axMap_APD.set_title('APD-80', fontsize=8)
-# axMap_CAD.set_title('CAD-80.', fontsize=8)
 
 
 # Fill rest with example plots
