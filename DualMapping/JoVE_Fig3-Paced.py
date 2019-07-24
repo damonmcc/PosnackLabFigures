@@ -46,7 +46,7 @@ def plot_heart(axis, heart_image, rois=None):
     if rois:
         # Create ROIs and get colors of their pixels
         for idx, roi in enumerate(rois):
-            roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc=None,
+            roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc=None, fill=None,
                                 ec=roi_colors[idx], lw=1)
             axis.add_artist(roi_circle)
 
@@ -84,17 +84,18 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         axis.tick_params(labelsize=6)
 
         data_y_counts = data[x_start:x_end, 1].astype(int)     # rows of the first column (skip X,Y header row)
+        counts_min = data_y_counts.min()
         # data_y_counts_delta = data_y.max() - data_y_.min()
         # MAX_COUNTS_16BIT
-        data_y = data_y_counts
+        data_y = data_y_counts - counts_min
 
         if filter_lp:
             print('* Filtering data: Low Pass')
             # TODO verify this isn't magic
             dt = 1 / 408
-            freq = 50
+            freq = 100
 
-            fs = 1 / (dt)
+            fs = 1 / dt
             Wn = (freq / (fs / 2))
             [b, a] = sig.butter(5, Wn)
             data_y = sig.filtfilt(b, a, data_y)
@@ -110,7 +111,6 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
             if invert:
                 print('!***! Can\'t invert a non-normalized trace!')
 
-
         ylim = [data_y.min(), data_y.max()]
         axis.set_ylim(ylim)
         # axis.set_ylim([0, 1.1])
@@ -119,20 +119,28 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         # axis.yaxis.set_major_locator(ticker.AutoLocator())
         # axis.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 
-        axis.plot(data_x, data_y, color=color, linewidth=0.5)
+        axis.plot(data_x, data_y, color=color, linewidth=0.2)
     else:
-        axis.plot(data, color=color, linewidth=0.5)
+        # axis.plot(data, color=color, linewidth=0.5)
+        print('***! Not imagej traces')
 
 
-def plot_traceOverlay(axis, trace_vm, trace_ca):
+def plot_trace_overlay(axis, trace_vm, trace_ca):
     # Normalize, Filter, and Plot a Vm and a Ca trace on the same plot
-    idx_end = len(trace_vm) - 30
+    idx_end = len(trace_vm)
+    # idx_span = 280    # 2 transients
+    idx_span = 120
+    # Zoom
+    # idx_end = len(trace_vm) - 120
+    # idx_span = 128
 
-    plot_trace(axis, trace_vm, imagej=True, fps=408, x_span=256, x_end=idx_end,
+    plot_trace(axis, trace_vm, imagej=True, fps=408, x_span=idx_span, x_end=idx_end,
                norm=True, invert=True, filter_lp=True, color=signal_colors[0])
-    plot_trace(axis, trace_ca, imagej=True, fps=408, x_span=256, x_end=idx_end,
+    plot_trace(axis, trace_ca, imagej=True, fps=408, x_span=idx_span, x_end=idx_end,
                norm=True, filter_lp=True, color=signal_colors[1])
-
+    # get the individual lines and set line width
+    for line in axis.get_lines():
+        line.set_linewidth(0.5)
     # axis.xaxis.set_major_locator(ticker.MultipleLocator(100))
     # axis.xaxis.set_minor_locator(ticker.MultipleLocator((int(100/4))))
 
@@ -148,8 +156,9 @@ def plot_traceOverlay(axis, trace_vm, trace_ca):
     axis.spines['top'].set_visible(False)
     axis.spines['bottom'].set_visible(False)
     # ECG Scale: ms and Norm. Fluor. bars forming an L
-    ECGScaleTime = [100, 250 / 1000]  # 100 ms, 0.25 Norm. Fluor.
-    ECGScaleOrigin = [axis.get_xlim()[1] - 1.5 * ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
+    ECGScaleTime = [50, 250 / 1000]  # 100 ms, 0.25 Norm. Fluor.
+    ECGScaleOrigin = [axis.get_xlim()[1] - ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
+    # ECGScaleOrigin = [axis.get_xlim()[1] - 1.5 * ECGScaleTime[0], axis.get_ylim()[0] + 0.01]
     # ECGScaleOrigin = [axis.get_xlim()[1] - 20, axis.get_ylim()[0] + 0.3]
     ECGScaleOriginPad = [2, 0.05]
     # Time scale bar
@@ -159,11 +168,13 @@ def plot_traceOverlay(axis, trace_vm, trace_ca):
     axis.text(ECGScaleOrigin[0], ECGScaleOrigin[1] - ECGScaleOriginPad[1],
               str(ECGScaleTime[0]) + 'ms',
               ha='left', va='top', fontsize=7, fontweight='bold')
+    # Lower y-axis lower limit to account for Scale bar
+    axis.set_ylim([-0.1, axis.get_ylim()[1]])
 
 
-def plot_ActMap(axis, actMap, cmap, norm):
+def plot_actmap(axis, actmap, cmap, norm):
     # Setup plot
-    height, width, = actMap.shape[0], actMap.shape[1]  # X, Y flipped due to rotation
+    height, width, = actmap.shape[0], actmap.shape[1]  # X, Y flipped due to rotation
     x_crop, y_crop = [0, width], [height, 150]
 
     # axis.axis('off')
@@ -180,10 +191,9 @@ def plot_ActMap(axis, actMap, cmap, norm):
     axis.set_ylim(y_crop)
 
     # Plot Activation Map
-    img = axis.imshow(actMap, norm=norm, cmap=cmap)
+    img = axis.imshow(actmap, norm=norm, cmap=cmap)
 
     return img
-
 
 
 def example_plot(axis):
@@ -239,18 +249,20 @@ axMap_CAD = fig.add_subplot(gsMaps[3])
 # Build map statistics section
 axMapStats = fig.add_subplot(gsAnalysis[2])
 
-
+# TODO 06-300 seems to be from 20190322-pigA, not 20190322-pigB
 # Plot Data Section
 # Import heart image
-heart_Vm = np.rot90(plt.imread('data/20190322-pigb/06-300_Vm_0001.tif'))
-heart_Ca = np.rot90(plt.imread('data/20190322-pigb/06-300_Ca_0001.tif'))
+heart_Vm = np.rot90(plt.imread('data/20190322-pigb/01-350_Vm_0001.tif'))
+heart_Ca = np.rot90(plt.imread('data/20190322-pigb/01-350_Ca_0001.tif'))
 # Create region of interest (ROI)
 # X and Y flipped and subtracted from W and H, due to image rotation
 # RV, LV
 H, W = heart_Vm.shape
-Rois_Vm = [{'y': H - 240, 'x': 114, 'r': 5},
-           {'y': H - 156, 'x': 250, 'r': 5}]
-Rois_Ca = Rois_Vm
+Rois_Vm = [{'y': H - 398, 'x': 206, 'r': 15},
+           {'y': H - 198, 'x': 324, 'r': 15}]
+# Rois_Ca = Rois_Vm
+Rois_Ca = [{'y': H - 440, 'x': 206, 'r': 15},
+           {'y': H - 240, 'x': 324, 'r': 15}]
 
 # Plot heart images
 axImage_Vm.set_title('Vm', fontsize=16)
@@ -261,18 +273,36 @@ plot_heart(axis=axImage_Ca, heart_image=heart_Ca, rois=Rois_Ca)
 
 # Import Traces
 # Load signal data, columns: index, fluorescence (counts)
-Trace_Vm_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-240x114.csv', delimiter=','),
-               5: np.genfromtxt('data/20190322-pigb/06-300_Vm_5x5-156x250.csv', delimiter=',')}
-Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-240x114.csv', delimiter=','),
-               5: np.genfromtxt('data/20190322-pigb/06-300_Vm_5x5-156x250.csv', delimiter=',')}
+# Trace_Vm_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-240x114.csv', delimiter=','),
+#                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_5x5-156x250.csv', delimiter=',')}
+# Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_1x1-240x114.csv', delimiter=','),
+#                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_5x5-156x250.csv', delimiter=',')}
+#
+# Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-240x114.csv', delimiter=','),
+#                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_5x5-156x250.csv', delimiter=',')}
+# Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-240x114.csv', delimiter=','),
+#                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_5x5-156x250.csv', delimiter=',')}
+# Trace_Vm_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_15x15-234x100.csv', delimiter=','),
+#                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_30x30-234x100.csv', delimiter=',')}
+# Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Vm_15x15-218x272.csv', delimiter=','),
+#                5: np.genfromtxt('data/20190322-pigb/06-300_Vm_30x30-218x272.csv', delimiter=',')}
+#
+# Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_15x15-234x100.csv', delimiter=','),
+#                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_30x30-234x100.csv', delimiter=',')}
+# Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_15x15-218x272.csv', delimiter=','),
+#                5: np.genfromtxt('data/20190322-pigb/06-300_Ca_30x30-218x272.csv', delimiter=',')}
+Trace_Vm_RV = {1: np.genfromtxt('data/20190322-pigb/01-350_Vm_15x15-398x206.csv', delimiter=','),
+               5: np.genfromtxt('data/20190322-pigb/01-350_Vm_30x30-398x206.csv', delimiter=',')}
+Trace_Vm_LV = {1: np.genfromtxt('data/20190322-pigb/01-350_Vm_15x15-198x324.csv', delimiter=','),
+               5: np.genfromtxt('data/20190322-pigb/01-350_Vm_30x30-198x324.csv', delimiter=',')}
 
-Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-240x114.csv', delimiter=','),
-               5: np.genfromtxt('data/20190322-pigb/06-300_Ca_5x5-156x250.csv', delimiter=',')}
-Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/06-300_Ca_1x1-240x114.csv', delimiter=','),
-               5: np.genfromtxt('data/20190322-pigb/06-300_Ca_5x5-156x250.csv', delimiter=',')}
+Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/01-350_Ca_15x15-440x206.csv', delimiter=','),
+               5: np.genfromtxt('data/20190322-pigb/01-350_Ca_30x30-440x206.csv', delimiter=',')}
+Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/01-350_Ca_15x15-240x324.csv', delimiter=','),
+               5: np.genfromtxt('data/20190322-pigb/01-350_Ca_30x30-240x324.csv', delimiter=',')}
 # Plot paced traces
-axTraces_Vm_RV.set_title('Single Pixel', fontsize=10)
-axTraces_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
+axTraces_Vm_RV.set_title('15x15 Pixel', fontsize=10)
+axTraces_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=10)
 
 plot_trace(axTraces_Vm_RV, Trace_Vm_RV[1], imagej=True, fps=408, color='b', x_span=1024)
 plot_trace(axTraces_Vm_RV_5x5, Trace_Vm_RV[5], imagej=True, fps=408, color='b', x_span=1024)
@@ -292,15 +322,14 @@ plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, color='r', 
 # Plot trace overlay
 # plot_trace(axTracesOverlay, Trace_Vm_LV[5], imagej=True, fps=408, color='r', x_span=256)
 # plot_trace(axTracesOverlay, Trace_Ca_LV[5], imagej=True, fps=408, color='r', x_span=256)
-plot_traceOverlay(axTracesOverlay, trace_vm=Trace_Vm_LV[5], trace_ca=Trace_Ca_LV[5])
+plot_trace_overlay(axTracesOverlay, trace_vm=Trace_Vm_LV[5], trace_ca=Trace_Ca_LV[5])
 
 # Import maps
-actMapVm = np.fliplr(np.rot90(np.loadtxt('data/20190322-pigb/ActMaps/ActMap-06-300_Vm.csv',
-                                                delimiter=',', skiprows=0)))
-actMapCa = np.fliplr(np.rot90(np.loadtxt('data/20190322-pigb/ActMaps/ActMap-06-300_Vm.csv',
-                                                delimiter=',', skiprows=0)))
+actMapVm = np.fliplr(np.rot90(np.loadtxt('data/20190322-pigb/OLD_06-300/ActMaps/ActMap-06-300_Vm.csv',
+                                         delimiter=',', skiprows=0)))
+actMapCa = np.fliplr(np.rot90(np.loadtxt('data/20190322-pigb/OLD_06-300/ActMaps/ActMap-06-300_Vm.csv',
+                                         delimiter=',', skiprows=0)))
 # Determine max value across all activation maps
-actMapMax = 0
 print('Activation Map max values:')
 actMapMax = max(np.nanmax(actMapVm), np.nanmax(actMapCa))
 # Create normalization range for all activation maps (round up to nearest 10)
@@ -311,12 +340,13 @@ cmap_actMapCa = scm.bamako.reversed()
 
 # Plot maps
 axMap_ActVm.set_title('Activation', fontsize=8)
-plot_ActMap(axis=axMap_ActVm, actMap=actMapVm, cmap=cmap_actMapVm, norm=cmapNorm_actMaps)
+plot_actmap(axis=axMap_ActVm, actmap=actMapVm, cmap=cmap_actMapVm, norm=cmapNorm_actMaps)
 axMap_ActVm.set_ylabel('Vm', fontsize=8)
-plot_ActMap(axis=axMap_ActCa, actMap=actMapVm, cmap=cmap_actMapCa, norm=cmapNorm_actMaps)
+plot_actmap(axis=axMap_ActCa, actmap=actMapVm, cmap=cmap_actMapCa, norm=cmapNorm_actMaps)
 axMap_ActCa.set_ylabel('Ca', fontsize=8)
-axMap_APD.set_title('APD-80', fontsize=8)
-axMap_CAD.set_title('CAD-80.', fontsize=8)
+axMap_APD.set_title('Duration (80%)', fontsize=8)
+# axMap_APD.set_title('APD-80', fontsize=8)
+# axMap_CAD.set_title('CAD-80.', fontsize=8)
 
 
 # Fill rest with example plots

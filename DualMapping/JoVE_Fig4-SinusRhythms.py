@@ -1,4 +1,5 @@
 import numpy as np
+import scipy.signal as sig
 from decimal import *
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
@@ -42,7 +43,7 @@ def plot_heart(axis, heart_image, rois=None):
     if rois:
         # Create ROIs and get colors of their pixels
         for idx, roi in enumerate(rois):
-            roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc=None,
+            roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc=None, fill=None,
                                 ec=roi_colors[idx], lw=1)
             axis.add_artist(roi_circle)
 
@@ -59,8 +60,8 @@ def plot_heart(axis, heart_image, rois=None):
     return img
 
 
-def plot_trace(axis, data, imagej=False, fps=None, color='b',
-               x_span=0, x_end=None):
+def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
+               norm=False, invert=False, filter_lp=False, color='b',):
     if imagej:
         if not x_end:
             x_end = len(data)
@@ -76,17 +77,36 @@ def plot_trace(axis, data, imagej=False, fps=None, color='b',
         # axis.xaxis.set_major_locator(ticker.AutoLocator())
         # axis.xaxis.set_minor_locator(ticker.AutoMinorLocator())
         axis.xaxis.set_major_locator(ticker.MultipleLocator(1000))
-        axis.xaxis.set_minor_locator(ticker.MultipleLocator(250))
+        axis.xaxis.set_minor_locator(ticker.MultipleLocator(int(1000/4)))
         axis.tick_params(labelsize=6)
 
         data_y_counts = data[x_start:x_end, 1].astype(int)     # rows of the first column (skip X,Y header row)
         counts_min = data_y_counts.min()
         # data_y_counts_delta = data_y.max() - data_y_.min()
         # MAX_COUNTS_16BIT
-        # # Normalize each trace
-        # data_min, data_max = np.nanmin(trace), np.nanmax(trace)
-        # trace = np.interp(trace, (data_min, data_max), (0, 1))
         data_y = data_y_counts - counts_min
+
+        if filter_lp:
+            print('* Filtering data: Low Pass')
+            # TODO verify this isn't magic
+            dt = 1 / 408
+            freq = 50
+
+            fs = 1 / dt
+            Wn = (freq / (fs / 2))
+            [b, a] = sig.butter(5, Wn)
+            data_y = sig.filtfilt(b, a, data_y)
+            print('* Data Filtered')
+
+        if norm:
+            # # Normalize each trace
+            data_min, data_max = np.nanmin(data_y), np.nanmax(data_y)
+            data_y = np.interp(data_y, (data_min, data_max), (0, 1))
+            if invert:
+                data_y = 1 - data_y  # Invert a normalized signal
+        else:
+            if invert:
+                print('!***! Can\'t invert a non-normalized trace!')
 
         ylim = [data_y.min(), data_y.max()]
         axis.set_ylim(ylim)
@@ -96,9 +116,10 @@ def plot_trace(axis, data, imagej=False, fps=None, color='b',
         # axis.yaxis.set_major_locator(ticker.AutoLocator())
         # axis.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 
-        axis.plot(data_x, data_y, color=color, linewidth=0.1)
+        axis.plot(data_x, data_y, color=color, linewidth=0.2)
     else:
-        axis.plot(data, color=color, linewidth=0.1)
+        # axis.plot(data, color=color, linewidth=0.5)
+        print('***! Not imagej traces')
 
 
 def example_plot(axis):
@@ -170,68 +191,63 @@ axTracesVF_Ca_RV_5x5, axTracesVF_Ca_LV_5x5 = fig.add_subplot(gsTracesVF_Ca[1]), 
 
 
 # Import heart image
-heart_NSR_Vm = np.fliplr(np.rot90(plt.imread('data/20190322-piga/18-NSR_Vm_0001.tif')))
-heart_NSR_Ca = np.fliplr(np.rot90(plt.imread('data/20190322-piga/18-NSR_Ca_0001.tif')))
-heart_VF_Vm = np.fliplr(np.rot90(plt.imread('data/20190322-piga/19-VFIB_Vm_0001.tif')))
-heart_VF_Ca = np.fliplr(np.rot90(plt.imread('data/20190322-piga/19-VFIB_Ca_0001.tif')))
+# heart_NSR_Vm = np.fliplr(np.rot90(plt.imread('data/20190322-piga/18-NSR_Vm_0001.tif')))
+# heart_NSR_Ca = np.fliplr(np.rot90(plt.imread('data/20190322-piga/18-NSR_Ca_0001.tif')))
+
+# heart_NSR_Vm = np.rot90(plt.imread('data/20190322-piga/18-NSR_Vm_0001.tif'))
+# heart_NSR_Ca = np.rot90(plt.imread('data/20190322-piga/18-NSR_Ca_0001.tif'))
+
+heart_VF_Vm = np.rot90(plt.imread('data/20190322-piga/19-VFIB_Vm_0001.tif'))
+heart_VF_Ca = np.rot90(plt.imread('data/20190322-piga/19-VFIB_Ca_0001.tif'))
 # ret, heart_thresh = cv2.threshold(heart, 150, np.nan, cv2.THRESH_TOZERO)
 
 
 # Create region of interest (ROI)
 # X and Y flipped and subtracted from W and H, due to image rotation
-W, H = heart_NSR_Vm.shape
-# RoisNSR_Vm = [{'y': W - 294, 'x': H - 124, 'r': 5},
-#              {'y': W - 216, 'x': H - 286, 'r': 5}]
-RoisNSR_Vm = [{'y': W - 124, 'x': H - 294, 'r': 5},
-              {'y': W - 286, 'x': H - 216, 'r': 5}]
-RoisNSR_Ca = [{'y': W - 122, 'x': H - 318, 'r': 5},
-              {'y': W - 284, 'x': H - 240, 'r': 5}]
-
-W, H = heart_VF_Vm.shape
-RoisVF_Vm = [{'y': W - 312, 'x': H - 550, 'r': 5},
-             {'y': W - 390, 'x': H - 384, 'r': 5}]
-
-RoisVF_Ca = [{'y': W - 336, 'x': H - 548, 'r': 5},
-             {'y': W - 414, 'x': H - 382, 'r': 5}]
+# RV, LV
+H, W = heart_VF_Vm.shape
+RoisVF_Vm = [{'y': H - 395, 'x': 179, 'r': 15},
+             {'y': H - 300, 'x': 310, 'r': 15}]
+RoisVF_Ca = RoisVF_Vm
 
 
 # Import Traces
 # Load signal data, columns: index, fluorescence (counts)
 # NSR
-TraceNSR_Vm_RV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Vm_1x1-294x124.csv', delimiter=','),
-                  5: np.genfromtxt('data/20190322-piga/18-NSR_Vm_5x5-294x124.csv', delimiter=',')}
-TraceNSR_Vm_LV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Vm_1x1-216x286.csv', delimiter=','),
-                  5: np.genfromtxt('data/20190322-piga/18-NSR_Vm_5x5-216x286.csv', delimiter=',')}
+TraceNSR_Vm_RV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Vm_15x15-234x90.csv', delimiter=','),
+                  5: np.genfromtxt('data/20190322-piga/18-NSR_Vm_30x30-234x90.csv', delimiter=',')}
+TraceNSR_Vm_LV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Vm_15x15-181x270.csv', delimiter=','),
+                  5: np.genfromtxt('data/20190322-piga/18-NSR_Vm_30x30-181x270.csv', delimiter=',')}
 
-TraceNSR_Ca_RV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Ca_1x1-318x222.csv', delimiter=','),
-                  5: np.genfromtxt('data/20190322-piga/18-NSR_Ca_5x5-318x222.csv', delimiter=',')}
-TraceNSR_Ca_LV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Ca_1x1-240x284.csv', delimiter=','),
-                  5: np.genfromtxt('data/20190322-piga/18-NSR_Ca_5x5-240x284.csv', delimiter=',')}
+TraceNSR_Ca_RV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Ca_15x15-234x90.csv', delimiter=','),
+                  5: np.genfromtxt('data/20190322-piga/18-NSR_Ca_30x30-234x90.csv', delimiter=',')}
+TraceNSR_Ca_LV = {1: np.genfromtxt('data/20190322-piga/18-NSR_Ca_15x15-181x270.csv', delimiter=','),
+                  5: np.genfromtxt('data/20190322-piga/18-NSR_Ca_30x30-181x270.csv', delimiter=',')}
 
 # VF
-TraceVF_Vm_RV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_1x1-390x384.csv', delimiter=','),
-                 5: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_5x5-390x384.csv', delimiter=',')}
-TraceVF_Vm_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_1x1-312x550.csv', delimiter=','),
-                 5: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_5x5-312x550.csv', delimiter=',')}
+TraceVF_Vm_RV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_15x15-395x179.csv', delimiter=','),
+                 5: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_30x30-395x179.csv', delimiter=',')}
+TraceVF_Vm_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_15x15-300x310.csv', delimiter=','),
+                 5: np.genfromtxt('data/20190322-piga/19-VFIB_Vm_30x30-300x310.csv', delimiter=',')}
 
-TraceVF_Ca_RV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_1x1-414x382.csv', delimiter=','),
-                 5: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_5x5-414x382.csv', delimiter=',')}
-TraceVF_Ca_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_1x1-336x548.csv', delimiter=','),
-                 5: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_5x5-336x548.csv', delimiter=',')}
+TraceVF_Ca_RV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_15x15-395x179.csv', delimiter=','),
+                 5: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_30x30-395x179.csv', delimiter=',')}
+TraceVF_Ca_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_15x15-300x310.csv', delimiter=','),
+                 5: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_30x30-300x310.csv', delimiter=',')}
 
 
 # Plot heart images
 axImage_Vm.set_title('Vm', fontsize=16)
-plot_heart(axis=axImage_Vm, heart_image=heart_NSR_Vm, rois=RoisNSR_Vm)
-# plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, rois=RoisVF_Vm)
+plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, rois=RoisVF_Vm)
 axImage_Ca.set_title('Ca', fontsize=16)
-plot_heart(axis=axImage_Ca, heart_image=heart_NSR_Ca, rois=RoisNSR_Vm)
-# plot_heart(axis=axImage_Ca, heart_image=heart_VF_Ca, rois=RoisVF_Ca)
+plot_heart(axis=axImage_Ca, heart_image=heart_VF_Ca, rois=RoisVF_Vm)
 
 
 # Plot NSR traces
-axTracesNSR_Vm_RV.set_title('Single Pixel', fontsize=10)
-axTracesNSR_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
+idx_end = len(TraceNSR_Vm_RV[1]) - 300
+idx_span = 512 + 256
+axTracesNSR_Vm_RV.set_title('15x15 Pixel', fontsize=10)
+axTracesNSR_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=10)
 # axTracesNSR_Vm_RV.set_ylabel('RV', fontsize=10)
 # axTracesNSR_Vm_RV.text(1.5, 0.5, 'text 45', rotation=45)
 # axTracesNSR_Vm_LV.text(1.5, 0.5, 'text 45', rotation=45)
@@ -241,37 +257,53 @@ axTracesNSR_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
 # axTracesNSR_Ca_RV.set_ylabel('RV', fontsize=10)
 # axTracesNSR_Ca_LV.set_ylabel('LV', fontsize=10)
 
-plot_trace(axTracesNSR_Vm_RV, TraceNSR_Vm_RV[1], imagej=True, fps=408, color='b', x_span=1024)
-plot_trace(axTracesNSR_Vm_RV_5x5, TraceNSR_Vm_RV[5], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTracesNSR_Vm_RV, TraceNSR_Vm_RV[1], imagej=True, fps=408,
+           color='b', x_span=idx_span, x_end=idx_end)
+plot_trace(axTracesNSR_Vm_RV_5x5, TraceNSR_Vm_RV[5], imagej=True, fps=408,
+           color='b', x_span=idx_span, x_end=idx_end)
+plot_trace(axTracesNSR_Vm_LV, TraceNSR_Vm_LV[1], imagej=True, fps=408,
+           color='r', x_span=idx_span, x_end=idx_end)
+plot_trace(axTracesNSR_Vm_LV_5x5, TraceNSR_Vm_LV[5], imagej=True, fps=408,
+           color='r', x_span=idx_span, x_end=idx_end)
 axTracesNSR_Vm_RV.set_xticklabels([])
 axTracesNSR_Vm_RV_5x5.set_xticklabels([])
-plot_trace(axTracesNSR_Vm_LV, TraceNSR_Vm_LV[1], imagej=True, fps=408, color='r', x_span=1024)
-plot_trace(axTracesNSR_Vm_LV_5x5, TraceNSR_Vm_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
-plot_trace(axTracesNSR_Ca_RV, TraceNSR_Ca_RV[1], imagej=True, fps=408, color='b', x_span=1024)
-plot_trace(axTracesNSR_Ca_RV_5x5, TraceNSR_Ca_RV[5], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTracesNSR_Ca_RV, TraceNSR_Ca_RV[1], imagej=True, fps=408,
+           color='b', x_span=idx_span, x_end=idx_end)
+plot_trace(axTracesNSR_Ca_RV_5x5, TraceNSR_Ca_RV[5], imagej=True, fps=408,
+           color='b', x_span=idx_span, x_end=idx_end)
+plot_trace(axTracesNSR_Ca_LV, TraceNSR_Ca_LV[1], imagej=True, fps=408,
+           color='r', x_span=idx_span, x_end=idx_end)
+plot_trace(axTracesNSR_Ca_LV_5x5, TraceNSR_Ca_LV[5], imagej=True, fps=408,
+           color='r', x_span=idx_span, x_end=idx_end)
 axTracesNSR_Ca_RV.set_xticklabels([])
 axTracesNSR_Ca_RV_5x5.set_xticklabels([])
-plot_trace(axTracesNSR_Ca_LV, TraceNSR_Ca_LV[1], imagej=True, fps=408, color='r', x_span=1024)
-plot_trace(axTracesNSR_Ca_LV_5x5, TraceNSR_Ca_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
 # Plot VF traces
-axTracesVF_Vm_RV.set_title('Single Pixel', fontsize=10)
-axTracesVF_Vm_RV_5x5.set_title('5x5 Pixel', fontsize=10)
+axTracesVF_Vm_RV.set_title('15x15 Pixel', fontsize=10)
+axTracesVF_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=10)
 
-plot_trace(axTracesVF_Vm_RV, TraceVF_Vm_RV[1], imagej=True, fps=408, color='b', x_span=1024)
-plot_trace(axTracesVF_Vm_RV_5x5, TraceVF_Vm_RV[5], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTracesVF_Vm_RV, TraceVF_Vm_RV[1], imagej=True, fps=408,
+           color='b', x_span=idx_span)
+plot_trace(axTracesVF_Vm_RV_5x5, TraceVF_Vm_RV[5], imagej=True, fps=408,
+           color='b', x_span=idx_span)
+plot_trace(axTracesVF_Vm_LV, TraceVF_Vm_LV[1], imagej=True, fps=408,
+           color='r', x_span=idx_span)
+plot_trace(axTracesVF_Vm_LV_5x5, TraceVF_Vm_LV[5], imagej=True, fps=408,
+           color='r', x_span=idx_span)
 axTracesVF_Vm_RV.set_xticklabels([])
 axTracesVF_Vm_RV_5x5.set_xticklabels([])
-plot_trace(axTracesVF_Vm_LV, TraceVF_Vm_LV[1], imagej=True, fps=408, color='r', x_span=1024)
-plot_trace(axTracesVF_Vm_LV_5x5, TraceVF_Vm_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
-plot_trace(axTracesVF_Ca_RV, TraceVF_Ca_RV[1], imagej=True, fps=408, color='b', x_span=1024)
-plot_trace(axTracesVF_Ca_RV_5x5, TraceVF_Ca_RV[5], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTracesVF_Ca_RV, TraceVF_Ca_RV[1], imagej=True, fps=408,
+           color='b', x_span=idx_span)
+plot_trace(axTracesVF_Ca_RV_5x5, TraceVF_Ca_RV[5], imagej=True, fps=408,
+           color='b', x_span=idx_span)
+plot_trace(axTracesVF_Ca_LV, TraceVF_Ca_LV[1], imagej=True, fps=408,
+           color='r', x_span=idx_span)
+plot_trace(axTracesVF_Ca_LV_5x5, TraceVF_Ca_LV[5], imagej=True, fps=408,
+           color='r', x_span=idx_span)
 axTracesVF_Ca_RV.set_xticklabels([])
 axTracesVF_Ca_RV_5x5.set_xticklabels([])
-plot_trace(axTracesVF_Ca_LV, TraceVF_Ca_LV[1], imagej=True, fps=408, color='r', x_span=1024)
-plot_trace(axTracesVF_Ca_LV_5x5, TraceVF_Ca_LV[5], imagej=True, fps=408, color='r', x_span=1024)
 
 
 # Fill rest with example plots
