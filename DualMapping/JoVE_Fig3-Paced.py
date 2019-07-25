@@ -3,7 +3,7 @@ import scipy.signal as sig
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import ticker
-from matplotlib.patches import Circle, Wedge
+from matplotlib.patches import Circle
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.font_manager as fm
@@ -11,16 +11,18 @@ import ScientificColourMaps5 as SCMaps
 
 MAX_COUNTS_16BIT = 65536
 colors_rois = ['b', 'r', 'k']
-colors_signals = ['0', '0.4']  # Vm: dark, Ca: light
+colors_signals = ['0', '0']  # Vm: dark, Ca: light
+lines_signals = ['-', '--']  # Vm: dark, Ca: light
 cmap_actMap = SCMaps.lajolla
 cmap_durMap = SCMaps.bilbao
 # cmap_durMap = SCMaps.oslo.reversed()
 # colors_maps = ['#db7a59', '#236C46']  # Act: orange, Dur: green
+fontsize1, fontsize2, fontsize3 = [14, 12, 10]
 X_CROP = [40, 20]   # to cut from left, right
 Y_CROP = [80, 50]   # to cut from bottom, top
 
 
-def plot_heart(axis, heart_image, scale=True, rois=None):
+def plot_heart(axis, heart_image, scale_text=True, rois=None):
     """
     Display an image of a heart on a given axis.
 
@@ -34,7 +36,11 @@ def plot_heart(axis, heart_image, scale=True, rois=None):
 
         The first two dimensions (M, N) define the rows and columns of
         the image.
-
+    
+    scale_text : bool, optional
+            If True, include text with the scale bar.
+            
+        Whether to include the scalebar text
     rois :
 
     Returns
@@ -60,14 +66,14 @@ def plot_heart(axis, heart_image, scale=True, rois=None):
     # Scale Bar
     scale_px_cm = 1 / 0.0149
     heart_scale = [scale_px_cm, scale_px_cm]  # x, y (pixels/cm)
-    if scale:
+    if scale_text:
         heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
-                                          'lower right', pad=0.2, color='w', frameon=False,
+                                          loc=4, pad=0.2, color='w', frameon=False,
                                           fontproperties=fm.FontProperties(size=7, weight='bold'))
     else:
         # Scale bar, no tex
         heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], ' ',
-                                          'lower right', pad=0, color='w', frameon=False,
+                                          loc=4, pad=0.4, color='w', frameon=False,
                                           fontproperties=fm.FontProperties(size=2, weight='bold'))
     axis.add_artist(heart_scale_bar)
 
@@ -78,7 +84,9 @@ def plot_heart(axis, heart_image, scale=True, rois=None):
 
 
 def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
-               norm=False, invert=False, filter_lp=False, color='b',):
+               norm=False, invert=False, filter_lp=False, format='b',):
+    data_x, data_y = 0, 0
+
     if imagej:
         if not x_end:
             x_end = len(data)
@@ -109,8 +117,8 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
             freq = 100
 
             fs = 1 / dt
-            Wn = (freq / (fs / 2))
-            [b, a] = sig.butter(5, Wn)
+            wn = (freq / (fs / 2))
+            [b, a] = sig.butter(5, wn)
             data_y = sig.filtfilt(b, a, data_y)
             print('* Data Filtered')
 
@@ -132,10 +140,12 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         # axis.yaxis.set_major_locator(ticker.AutoLocator())
         # axis.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 
-        axis.plot(data_x, data_y, color=color, linewidth=0.2)
+        axis.plot(data_x, data_y, format, linewidth=0.2)
     else:
         # axis.plot(data, color=color, linewidth=0.5)
         print('***! Not imagej traces')
+
+    return data_x, data_y
 
 
 def plot_trace_overlay(axis, trace_vm, trace_ca):
@@ -149,16 +159,17 @@ def plot_trace_overlay(axis, trace_vm, trace_ca):
     # idx_end = len(trace_vm) - 120
     # idx_span = 128
 
-    plot_trace(axis, trace_vm, imagej=True, fps=408, x_span=idx_span, x_end=idx_end,
-               norm=True, invert=True, filter_lp=True, color=colors_signals[0])
-    plot_trace(axis, trace_ca, imagej=True, fps=408, x_span=idx_span, x_end=idx_end,
-               norm=True, filter_lp=True, color=colors_signals[1])
-    # get the individual lines and set line width
-    trace_maxs = []
-    for line in axis.get_lines():
+    trace_vm_x, trace_vm_y = plot_trace(axis, trace_vm, imagej=True, fps=408, x_span=idx_span, x_end=idx_end,
+                                        norm=True, invert=True, filter_lp=True,
+                                        )
+    trace_ca_x, trace_ca_y = plot_trace(axis, trace_ca, imagej=True, fps=408, x_span=idx_span, x_end=idx_end,
+                                        norm=True, filter_lp=True,
+                                        )
+    # Set the linewidth of each trace
+    for idx, line in enumerate(axis.get_lines()):
         line.set_linewidth(0.5)
-        trace_maxs.append(max(line._y))
-    traces_max = max(trace_maxs)
+        line.set_color(colors_signals[idx])
+        line.set_linestyle(lines_signals[idx])
 
     # axis.xaxis.set_major_locator(ticker.MultipleLocator(100))
     # axis.xaxis.set_minor_locator(ticker.MultipleLocator((int(100/4))))
@@ -186,9 +197,10 @@ def plot_trace_overlay(axis, trace_vm, trace_ca):
               "k-", linewidth=1)
     axis.text(ecg_scale_origin[0], ecg_scale_origin[1] - ecg_scale_origin_pad[1],
               str(ecg_scale_time[0]) + 'ms',
-              ha='left', va='top', fontsize=7, fontweight='bold')
+              ha='left', va='top', fontsize=7, fontweight='semibold')
+    # Get the max of both traces
+    traces_max = max(np.nanmax(trace_vm_y), np.nanmax(trace_ca_y))
     # Lower y-axis lower limit to account for Scale bar
-    # axis.set_ylim([-0.1, axis.get_ylim()[1]])
     axis.set_ylim([-0.1, traces_max])
 
 
@@ -282,9 +294,9 @@ Rois_Vm = [{'y': H - 398, 'x': 206, 'r': 15},
 Rois_Ca = Rois_Vm
 
 # Plot heart images
-axImage_Vm.set_title('Vm', fontsize=16)
+axImage_Vm.set_title('Vm', fontsize=14)
 plot_heart(axis=axImage_Vm, heart_image=heart_Vm, rois=Rois_Vm)
-axImage_Ca.set_title('Ca', fontsize=16)
+axImage_Ca.set_title('Ca', fontsize=14)
 plot_heart(axis=axImage_Ca, heart_image=heart_Ca, rois=Rois_Ca)
 
 
@@ -300,33 +312,34 @@ Trace_Ca_RV = {1: np.genfromtxt('data/20190322-pigb/01-350_Ca_15x15-398x206.csv'
 Trace_Ca_LV = {1: np.genfromtxt('data/20190322-pigb/01-350_Ca_15x15-198x324.csv', delimiter=','),
                5: np.genfromtxt('data/20190322-pigb/01-350_Ca_30x30-198x324.csv', delimiter=',')}
 # Plot paced traces
-axTraces_Vm_RV.set_title('15x15 Pixel', fontsize=10)
-axTraces_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=10)
+axTraces_Vm_RV.set_title('15x15 Pixel', fontsize=12)
+axTraces_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=12)
 axTraces_label_x = -0.15
 axTraces_label_y = 0.5
-axTraces_label_size = 10
+axTraces_label_size = fontsize3
+axTraces_label_font = fm.FontProperties(size=fontsize3, weight='semibold')
 
-plot_trace(axTraces_Vm_RV, Trace_Vm_RV[1], imagej=True, fps=408, color='b', x_span=1024)
-plot_trace(axTraces_Vm_RV_5x5, Trace_Vm_RV[5], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTraces_Vm_RV, Trace_Vm_RV[1], imagej=True, fps=408, format='b', x_span=1024)
+plot_trace(axTraces_Vm_RV_5x5, Trace_Vm_RV[5], imagej=True, fps=408, format='b', x_span=1024)
 axTraces_Vm_RV.set_xticklabels([])
 axTraces_Vm_RV_5x5.set_xticklabels([])
-plot_trace(axTraces_Vm_LV, Trace_Vm_LV[1], imagej=True, fps=408, color='r', x_span=1024)
-plot_trace(axTraces_Vm_LV_5x5, Trace_Vm_LV[5], imagej=True, fps=408, color='r', x_span=1024)
+plot_trace(axTraces_Vm_LV, Trace_Vm_LV[1], imagej=True, fps=408, format='r', x_span=1024)
+plot_trace(axTraces_Vm_LV_5x5, Trace_Vm_LV[5], imagej=True, fps=408, format='r', x_span=1024)
 axTraces_Vm_RV.text(axTraces_label_x, axTraces_label_y, 'RV', transform=axTraces_Vm_RV.transAxes,
-                    rotation=90, ha='center', va='center', fontsize=axTraces_label_size)
+                    rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
 axTraces_Vm_LV.text(axTraces_label_x, axTraces_label_y, 'LV', transform=axTraces_Vm_LV.transAxes,
-                    rotation=90, ha='center', va='center', fontsize=axTraces_label_size)
+                    rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
 
-plot_trace(axTraces_Ca_RV, Trace_Ca_RV[1], imagej=True, fps=408, color='b', x_span=1024)
-plot_trace(axTraces_Ca_RV_5x5, Trace_Ca_RV[5], imagej=True, fps=408, color='b', x_span=1024)
+plot_trace(axTraces_Ca_RV, Trace_Ca_RV[1], imagej=True, fps=408, format='b', x_span=1024)
+plot_trace(axTraces_Ca_RV_5x5, Trace_Ca_RV[5], imagej=True, fps=408, format='b', x_span=1024)
 axTraces_Ca_RV.set_xticklabels([])
 axTraces_Ca_RV_5x5.set_xticklabels([])
-plot_trace(axTraces_Ca_LV, Trace_Ca_LV[1], imagej=True, fps=408, color='r', x_span=1024)
-plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, color='r', x_span=1024)
+plot_trace(axTraces_Ca_LV, Trace_Ca_LV[1], imagej=True, fps=408, format='r', x_span=1024)
+plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, format='r', x_span=1024)
 axTraces_Ca_RV.text(axTraces_label_x, axTraces_label_y, 'RV', transform=axTraces_Ca_RV.transAxes,
-                    rotation=90, ha='center', va='center', fontsize=axTraces_label_size)
+                    rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
 axTraces_Ca_LV.text(axTraces_label_x, axTraces_label_y, 'LV', transform=axTraces_Ca_LV.transAxes,
-                    rotation=90, ha='center', va='center', fontsize=axTraces_label_size)
+                    rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
 
 # Plot Analysis Section
 # Plot trace overlay
@@ -380,20 +393,19 @@ cmapNorm_caMaps = colors.Normalize(vmin=0, vmax=round(caMapMax + 5.1, -1))
 
 # Plot maps
 # Activation Maps
-axMap_ActVm.set_title('Activation', fontsize=8)
+axMap_ActVm.set_title('Activation', fontsize=fontsize3, weight='semibold')
 axMaps_label_x = -0.15
 axMaps_label_y = 0.5
 axMaps_label_size = 10
-plot_heart(axis=axMap_ActVm, heart_image=heart_Vm, scale=False)
+plot_heart(axis=axMap_ActVm, heart_image=heart_Vm, scale_text=False)
 img_actMapVm = plot_map(axis=axMap_ActVm, actmap=actMapVm, cmap=cmap_actMap, norm=cmapNorm_actMaps)
-# axMap_ActVm.set_ylabel('Vm', fontsize=8)
-axMap_ActVm.text(axMaps_label_x, axMaps_label_y, 'Vm',transform=axMap_ActVm.transAxes,
-                 rotation=90, ha='center', va='center', fontsize=8)
-plot_heart(axis=axMap_ActCa, heart_image=heart_Ca, scale=False)
+axMap_ActVm.text(axMaps_label_x, axMaps_label_y, 'Vm', transform=axMap_ActVm.transAxes,
+                 rotation=90, ha='center', va='center', fontsize=fontsize3)
+plot_heart(axis=axMap_ActCa, heart_image=heart_Ca, scale_text=False)
 img_actMapCa = plot_map(axis=axMap_ActCa, actmap=actMapCa, cmap=cmap_actMap, norm=cmapNorm_actMaps)
-axMap_ActCa.set_ylabel('Ca', fontsize=8)
+axMap_ActCa.set_ylabel('Ca', fontsize=fontsize3)
 axMap_ActCa.text(axMaps_label_x, axMaps_label_y, 'Ca', transform=axMap_ActCa.transAxes,
-                 rotation=90, ha='center', va='center', fontsize=8)
+                 rotation=90, ha='center', va='center', fontsize=fontsize3)
 # Add colorbar (activation maps)
 ax_cmap_act = inset_axes(axMap_ActCa,
                          width="8%", height="80%",  # % of parent_bbox width, height
@@ -406,10 +418,10 @@ cb_act.ax.yaxis.set_minor_locator(ticker.LinearLocator(5))
 cb_act.ax.tick_params(labelsize=6)
 
 # Duration Maps
-axMap_APD.set_title('Duration, 80%', fontsize=8)
-plot_heart(axis=axMap_APD, heart_image=heart_Vm, scale=False)
-img_durMapCa = plot_map(axis=axMap_APD, actmap=durMapVm, cmap=cmap_durMap, norm=cmapNorm_durMaps)
-plot_heart(axis=axMap_CAD, heart_image=heart_Vm, scale=False)
+axMap_APD.set_title('Duration, 80%', fontsize=fontsize3, weight='semibold')
+plot_heart(axis=axMap_APD, heart_image=heart_Vm, scale_text=False)
+img_durMapVm = plot_map(axis=axMap_APD, actmap=durMapVm, cmap=cmap_durMap, norm=cmapNorm_durMaps)
+plot_heart(axis=axMap_CAD, heart_image=heart_Vm, scale_text=False)
 img_durMapCa = plot_map(axis=axMap_CAD, actmap=durMapCa, cmap=cmap_durMap, norm=cmapNorm_durMaps)
 
 # Add colorbar (duration maps)
@@ -442,8 +454,8 @@ cb_dur.ax.tick_params(labelsize=6)
 
 # example_plot(axMap_ActVm)
 # example_plot(axMap_ActCa)
-example_plot(axMap_APD)
-example_plot(axMap_CAD)
+# example_plot(axMap_APD)
+# example_plot(axMap_CAD)
 
 example_plot(axMapStats)
 
