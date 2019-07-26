@@ -56,7 +56,7 @@ def plot_heart(axis, heart_image, scale_text=True, rois=None):
     img = axis.imshow(heart_image, cmap='bone')
 
     if rois:
-        # Create ROIs and get colors of their pixels
+        # Create ROIs
         for idx, roi in enumerate(rois):
             roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc=None, fill=None,
                                 ec=colors_rois[idx], lw=1)
@@ -72,7 +72,7 @@ def plot_heart(axis, heart_image, scale_text=True, rois=None):
                                           loc=4, pad=0.2, color='w', frameon=False,
                                           fontproperties=fm.FontProperties(size=7, weight='bold'))
     else:
-        # Scale bar, no tex
+        # Scale bar, no text
         heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], ' ',
                                           loc=4, pad=0.4, color='w', frameon=False,
                                           fontproperties=fm.FontProperties(size=2, weight='bold'))

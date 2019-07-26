@@ -13,10 +13,13 @@ import ScientificColourMaps5 as scm
 import warnings
 
 MAX_COUNTS_16BIT = 65536
-roi_colors = ['r', 'b', 'k']
+colors_rois = ['b', 'r', 'k']
+fontsize1, fontsize2, fontsize3, fontsize4 = [14, 10, 8, 6]
+X_CROP = [0, 80]   # to cut from left, right
+Y_CROP = [30, 80]   # to cut from bottom, top
 
 
-def plot_heart(axis, heart_image, rois=None):
+def plot_heart(axis, heart_image, scale_text=True, rois=None):
     """
     Display an image of a heart on a given axis.
 
@@ -31,20 +34,28 @@ def plot_heart(axis, heart_image, rois=None):
         The first two dimensions (M, N) define the rows and columns of
         the image.
 
+    scale_text : bool, optional
+            If True, include text with the scale bar.
+
+        Whether to include the scalebar text
+    rois :
+
     Returns
     -------
     image : `~matplotlib.image.AxesImage`
     """
     # Setup plot
     height, width, = heart_image.shape[0], heart_image.shape[1]  # X, Y flipped due to rotation
+    x_crop, y_crop = [X_CROP[0], width - X_CROP[1]], [height - Y_CROP[0], Y_CROP[1]]
+    print('Heart plot (W x H): ', width, ' x ', height)
     axis.axis('off')
     img = axis.imshow(heart_image, cmap='bone')
 
     if rois:
-        # Create ROIs and get colors of their pixels
+        # Create ROIs
         for idx, roi in enumerate(rois):
             roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc=None, fill=None,
-                                ec=roi_colors[idx], lw=1)
+                                ec=colors_rois[idx], lw=1)
             axis.add_artist(roi_circle)
 
     # patch = Ellipse((width/2, height/2), width=width, height=height, transform=axis.transData)
@@ -52,49 +63,64 @@ def plot_heart(axis, heart_image, rois=None):
     # Scale Bar
     scale_px_cm = 1 / 0.0149
     heart_scale = [scale_px_cm, scale_px_cm]  # x, y (pixels/cm)
-    heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
-                                      'lower right', pad=0.2, color='w', frameon=False,
-                                      fontproperties=fm.FontProperties(size=7, weight='bold'))
+    if scale_text:
+        heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
+                                          loc=4, pad=0.2, color='w', frameon=False,
+                                          fontproperties=fm.FontProperties(size=7, weight='bold'))
+    else:
+        # Scale bar, no text
+        heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], ' ',
+                                          loc=4, pad=0.4, color='w', frameon=False,
+                                          fontproperties=fm.FontProperties(size=2, weight='bold'))
     axis.add_artist(heart_scale_bar)
+
+    axis.set_xlim(x_crop)
+    axis.set_ylim(y_crop)
 
     return img
 
 
 def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
-               norm=False, invert=False, filter_lp=False, color='b',):
+               frac=True, norm=False, invert=False, filter_lp=False,
+               color='b', x_ticks=True):
+    data_x, data_y = 0, 0
+
     if imagej:
         if not x_end:
-            x_end = len(data)
+            x_end = len(data)   # Includes X,Y header row (nan,nan)
         x_start = x_end - x_span
 
-        data_x = data[x_start:x_end, 0] - x_start             # All rows of the first column (skip X,Y header row)
+        # data_x = data[x_start:x_end, 0]             # All rows of the first column (skip X,Y header row)
+        data_x = data[1:x_span + 1, 0]             # All rows of the first column (skip X,Y header row)
         if fps:
             # convert to ms
             data_x = ((data_x - 1) / fps) * 1000    # ensure range is 0 - max
-            data_x = data_x.astype(int)
+            # data_x = data_x.astype(int)
             # axis.xaxis.set_major_locator(ticker.IndexLocator(base=1000, offset=500))
-        # axis.set_xlim(xlim)
         # axis.xaxis.set_major_locator(ticker.AutoLocator())
         # axis.xaxis.set_minor_locator(ticker.AutoMinorLocator())
-        axis.xaxis.set_major_locator(ticker.MultipleLocator(1000))
-        axis.xaxis.set_minor_locator(ticker.MultipleLocator(int(1000/4)))
-        axis.tick_params(labelsize=6)
 
         data_y_counts = data[x_start:x_end, 1].astype(int)     # rows of the first column (skip X,Y header row)
         counts_min = data_y_counts.min()
         # data_y_counts_delta = data_y.max() - data_y_.min()
         # MAX_COUNTS_16BIT
-        data_y = data_y_counts - counts_min
+
+        if frac:
+            # convert y-axis from counts to percentage range of max counts
+            data_y = data_y_counts / MAX_COUNTS_16BIT * 100
+            axis.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
+        else:
+            # Shift y-axis counts to start at zero
+            data_y = data_y_counts - counts_min
 
         if filter_lp:
             print('* Filtering data: Low Pass')
-            # TODO verify this isn't magic
             dt = 1 / 408
-            freq = 50
+            freq = 100
 
             fs = 1 / dt
-            Wn = (freq / (fs / 2))
-            [b, a] = sig.butter(5, Wn)
+            wn = (freq / (fs / 2))
+            [b, a] = sig.butter(5, wn)
             data_y = sig.filtfilt(b, a, data_y)
             print('* Data Filtered')
 
@@ -108,18 +134,33 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
             if invert:
                 print('!***! Can\'t invert a non-normalized trace!')
 
+        axis.tick_params(labelsize=fontsize4)
+        if x_ticks:
+            axis.xaxis.set_major_locator(ticker.MultipleLocator(1000))
+            axis.xaxis.set_minor_locator(ticker.MultipleLocator(int(1000/4)))
+        else:
+            axis.set_xticks([])
+            axis.set_xticklabels([])
+
         ylim = [data_y.min(), data_y.max()]
         axis.set_ylim(ylim)
         # axis.set_ylim([0, 1.1])
         axis.yaxis.set_major_locator(ticker.LinearLocator(2))
-        axis.yaxis.set_minor_locator(ticker.LinearLocator(10))
+        axis.yaxis.set_minor_locator(ticker.LinearLocator(5))
         # axis.yaxis.set_major_locator(ticker.AutoLocator())
         # axis.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 
-        axis.plot(data_x, data_y, color=color, linewidth=0.2)
+        axis.spines['right'].set_visible(False)
+        axis.spines['left'].set_visible(False)
+        axis.spines['top'].set_visible(False)
+        axis.spines['bottom'].set_visible(False)
+
+        axis.plot(data_x, data_y, color, linewidth=0.2)
     else:
         # axis.plot(data, color=color, linewidth=0.5)
         print('***! Not imagej traces')
+
+    return data_x, data_y
 
 
 def example_plot(axis):
@@ -144,9 +185,9 @@ axText = fig.add_subplot(gsfig[0])  # Overall: ? row, ? columns
 axText.axis('off')
 # axText.set_title('Sinus Rhythm', fontsize=18)
 axText.text(0.425, 1, 'Sinus Rhythm',
-            ha='center', va='top', fontsize=16)
+            ha='center', va='top', size=fontsize1, weight='semibold')
 axText.text(0.825, 1, 'VF',
-            ha='center', va='top', fontsize=16)
+            ha='center', va='top', size=fontsize1, weight='semibold')
 
 # 3 columns for data
 gs0 = gsfig[1].subgridspec(1, 3, width_ratios=[0.2, 0.4, 0.4])  # Overall: ? row, ? columns
@@ -156,17 +197,20 @@ gsImages = gs0[0].subgridspec(2, 1)  # 2 rows, 1 columns for Activation Maps
 axImage_Vm = fig.add_subplot(gsImages[0])
 axImage_Ca = fig.add_subplot(gsImages[1])
 
+trace_wspace = 0.4
+trace_hspace = 0.4
+signal_hspace = 0.3
 # Build NSR Traces section
-gsTracesNSR = gs0[1].subgridspec(2, 1)
+gsTracesNSR = gs0[1].subgridspec(2, 1, hspace=signal_hspace)
 # Vm
-gsTracesNSR_Vm = gsTracesNSR[0].subgridspec(2, 2)
+gsTracesNSR_Vm = gsTracesNSR[0].subgridspec(2, 2, wspace=trace_wspace)
 # Pixel
 axTracesNSR_Vm_RV, axTracesNSR_Vm_LV = fig.add_subplot(gsTracesNSR_Vm[0]), fig.add_subplot(gsTracesNSR_Vm[2])
 # 5x5
 axTracesNSR_Vm_RV_5x5, axTracesNSR_Vm_LV_5x5 = fig.add_subplot(gsTracesNSR_Vm[1]), fig.add_subplot(gsTracesNSR_Vm[3])
 
 # Ca
-gsTracesNSR_Ca = gsTracesNSR[1].subgridspec(2, 2)
+gsTracesNSR_Ca = gsTracesNSR[1].subgridspec(2, 2, wspace=trace_wspace)
 # Pixel
 axTracesNSR_Ca_RV, axTracesNSR_Ca_LV = fig.add_subplot(gsTracesNSR_Ca[0]), fig.add_subplot(gsTracesNSR_Ca[2])
 # 5x5
@@ -174,16 +218,16 @@ axTracesNSR_Ca_RV_5x5, axTracesNSR_Ca_LV_5x5 = fig.add_subplot(gsTracesNSR_Ca[1]
 
 
 # Build VF Traces section
-gsTracesVF = gs0[2].subgridspec(2, 1)
+gsTracesVF = gs0[2].subgridspec(2, 1, hspace=signal_hspace)
 # Vm
-gsTracesVF_Vm = gsTracesVF[0].subgridspec(2, 2)
+gsTracesVF_Vm = gsTracesVF[0].subgridspec(2, 2, wspace=trace_wspace)
 # Pixel
 axTracesVF_Vm_RV, axTracesVF_Vm_LV = fig.add_subplot(gsTracesVF_Vm[0]), fig.add_subplot(gsTracesVF_Vm[2])
 # 5x5
 axTracesVF_Vm_RV_5x5, axTracesVF_Vm_LV_5x5 = fig.add_subplot(gsTracesVF_Vm[1]), fig.add_subplot(gsTracesVF_Vm[3])
 
 # Ca
-gsTracesVF_Ca = gsTracesVF[1].subgridspec(2, 2)
+gsTracesVF_Ca = gsTracesVF[1].subgridspec(2, 2, wspace=trace_wspace)
 # Pixel
 axTracesVF_Ca_RV, axTracesVF_Ca_LV = fig.add_subplot(gsTracesVF_Ca[0]), fig.add_subplot(gsTracesVF_Ca[2])
 # 5x5
@@ -237,73 +281,70 @@ TraceVF_Ca_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_15x15-300x310.c
 
 
 # Plot heart images
-axImage_Vm.set_title('Vm', fontsize=16)
+axImage_Vm.set_title('Vm', size=fontsize1, weight='semibold')
 plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, rois=RoisVF_Vm)
-axImage_Ca.set_title('Ca', fontsize=16)
+# axImage_Vm.text(axImage_label_x, axImage_label_y, 'Vm', transform=axImage_Vm.transAxes,
+#                 rotation=90, ha='center', va='center', fontproperties=axImages_label_font)
+axImage_Ca.set_title('Ca', size=fontsize1, weight='semibold')
 plot_heart(axis=axImage_Ca, heart_image=heart_VF_Ca, rois=RoisVF_Vm)
 
 
-# Plot NSR traces
 idx_end = len(TraceNSR_Vm_RV[1]) - 300
-idx_span = 512 + 256
-axTracesNSR_Vm_RV.set_title('15x15 Pixel', fontsize=10)
-axTracesNSR_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=10)
-# axTracesNSR_Vm_RV.set_ylabel('RV', fontsize=10)
-# axTracesNSR_Vm_RV.text(1.5, 0.5, 'text 45', rotation=45)
-# axTracesNSR_Vm_LV.text(1.5, 0.5, 'text 45', rotation=45)
-# axTracesNSR_Ca_RV.text(1.5, 0.5, 'text 45', rotation=45)
-# axTracesNSR_Ca_LV.text(1.5, 0.5, 'text 45', rotation=45)
-# axTracesNSR_Vm_LV.set_ylabel('LV', fontsize=10)
-# axTracesNSR_Ca_RV.set_ylabel('RV', fontsize=10)
-# axTracesNSR_Ca_LV.set_ylabel('LV', fontsize=10)
-
+idx_span = 512 + 300
+axTracesNSR_Vm_RV.set_title('15x15 Pixel', fontsize=fontsize2, weight='semibold')
+axTracesNSR_Vm_RV_5x5.set_title('39x30 Pixel', fontsize=fontsize2, weight='semibold')
+axTraces_label_x = -0.25
+axTraces_label_y = 0.5
+axTraces_label_font = fm.FontProperties(size=fontsize3, weight='semibold')
+# Plot NSR traces
+# Vm
+axTracesNSR_Vm_RV.text(axTraces_label_x, axTraces_label_y, 'RV', transform=axTracesNSR_Vm_RV.transAxes,
+                       rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
 plot_trace(axTracesNSR_Vm_RV, TraceNSR_Vm_RV[1], imagej=True, fps=408,
-           color='b', x_span=idx_span, x_end=idx_end)
+           color='b', x_span=idx_span, x_end=idx_end, x_ticks=False)
 plot_trace(axTracesNSR_Vm_RV_5x5, TraceNSR_Vm_RV[5], imagej=True, fps=408,
-           color='b', x_span=idx_span, x_end=idx_end)
+           color='b', x_span=idx_span, x_end=idx_end, x_ticks=False)
+axTracesNSR_Vm_LV.text(axTraces_label_x, axTraces_label_y, 'LV', transform=axTracesNSR_Vm_LV.transAxes,
+                       rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
 plot_trace(axTracesNSR_Vm_LV, TraceNSR_Vm_LV[1], imagej=True, fps=408,
            color='r', x_span=idx_span, x_end=idx_end)
 plot_trace(axTracesNSR_Vm_LV_5x5, TraceNSR_Vm_LV[5], imagej=True, fps=408,
            color='r', x_span=idx_span, x_end=idx_end)
-axTracesNSR_Vm_RV.set_xticklabels([])
-axTracesNSR_Vm_RV_5x5.set_xticklabels([])
-
+# Ca
+axTracesNSR_Ca_RV.text(axTraces_label_x, axTraces_label_y, 'RV', transform=axTracesNSR_Ca_RV.transAxes,
+                       rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
 plot_trace(axTracesNSR_Ca_RV, TraceNSR_Ca_RV[1], imagej=True, fps=408,
-           color='b', x_span=idx_span, x_end=idx_end)
+           color='b', x_span=idx_span, x_end=idx_end, x_ticks=False)
 plot_trace(axTracesNSR_Ca_RV_5x5, TraceNSR_Ca_RV[5], imagej=True, fps=408,
-           color='b', x_span=idx_span, x_end=idx_end)
+           color='b', x_span=idx_span, x_end=idx_end, x_ticks=False)
+axTracesNSR_Ca_LV.text(axTraces_label_x, axTraces_label_y, 'LV', transform=axTracesNSR_Ca_LV.transAxes,
+                       rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
 plot_trace(axTracesNSR_Ca_LV, TraceNSR_Ca_LV[1], imagej=True, fps=408,
            color='r', x_span=idx_span, x_end=idx_end)
 plot_trace(axTracesNSR_Ca_LV_5x5, TraceNSR_Ca_LV[5], imagej=True, fps=408,
            color='r', x_span=idx_span, x_end=idx_end)
-axTracesNSR_Ca_RV.set_xticklabels([])
-axTracesNSR_Ca_RV_5x5.set_xticklabels([])
 
 # Plot VF traces
-axTracesVF_Vm_RV.set_title('15x15 Pixel', fontsize=10)
-axTracesVF_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=10)
-
+axTracesVF_Vm_RV.set_title('15x15 Pixel', fontsize=fontsize2, weight='semibold')
+axTracesVF_Vm_RV_5x5.set_title('39x30 Pixel', fontsize=fontsize2, weight='semibold')
+# Vm
 plot_trace(axTracesVF_Vm_RV, TraceVF_Vm_RV[1], imagej=True, fps=408,
-           color='b', x_span=idx_span)
+           color='b', x_span=idx_span, x_ticks=False)
 plot_trace(axTracesVF_Vm_RV_5x5, TraceVF_Vm_RV[5], imagej=True, fps=408,
-           color='b', x_span=idx_span)
+           color='b', x_span=idx_span, x_ticks=False)
 plot_trace(axTracesVF_Vm_LV, TraceVF_Vm_LV[1], imagej=True, fps=408,
            color='r', x_span=idx_span)
 plot_trace(axTracesVF_Vm_LV_5x5, TraceVF_Vm_LV[5], imagej=True, fps=408,
            color='r', x_span=idx_span)
-axTracesVF_Vm_RV.set_xticklabels([])
-axTracesVF_Vm_RV_5x5.set_xticklabels([])
-
+# Ca
 plot_trace(axTracesVF_Ca_RV, TraceVF_Ca_RV[1], imagej=True, fps=408,
-           color='b', x_span=idx_span)
+           color='b', x_span=idx_span, x_ticks=False)
 plot_trace(axTracesVF_Ca_RV_5x5, TraceVF_Ca_RV[5], imagej=True, fps=408,
-           color='b', x_span=idx_span)
+           color='b', x_span=idx_span, x_ticks=False)
 plot_trace(axTracesVF_Ca_LV, TraceVF_Ca_LV[1], imagej=True, fps=408,
            color='r', x_span=idx_span)
 plot_trace(axTracesVF_Ca_LV_5x5, TraceVF_Ca_LV[5], imagej=True, fps=408,
            color='r', x_span=idx_span)
-axTracesVF_Ca_RV.set_xticklabels([])
-axTracesVF_Ca_RV_5x5.set_xticklabels([])
 
 
 # Fill rest with example plots
