@@ -15,8 +15,11 @@ colors_rois = ['b', 'r', 'k']
 colors_signals = ['0', '0']  # Vm: dark, Ca: light
 lines_signals = ['-', '--']  # Vm: dark, Ca: light
 cmap_actMap = SCMaps.lajolla
-cmap_durMap = SCMaps.bilbao
+# cmap_durMap = SCMaps.bilbao
 # cmap_durMap = SCMaps.oslo.reversed()
+# cmap_durMap = SCMaps.lapaz.reversed()
+# cmap_durMap = SCMaps.turku.reversed()
+cmap_durMap = SCMaps.lajolla
 # colors_maps = ['#db7a59', '#236C46']  # Act: orange, Dur: green
 fontsize1, fontsize2, fontsize3, fontsize4 = [14, 10, 8, 6]
 X_CROP = [40, 20]   # to cut from left, right
@@ -169,8 +172,8 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
 
 def plot_trace_overlay(axis, trace_vm, trace_ca):
     # Normalize, Filter, and Plot a Vm and a Ca trace on the same plot
-    idx_end = len(trace_vm)
-    idx_span = 280    # 2 transients
+    idx_end = len(trace_vm) - 60
+    idx_span = 180    # 280 ~= 2 paced transients
     # idx_span = 120
     # idx_span = idx_end-512
     # Zoom
@@ -308,7 +311,7 @@ axMap_CAD = fig.add_subplot(gsMaps[3])
 axMapStats = fig.add_subplot(gsAnalysis[2])
 
 # Plot Data Section
-# Import heart image
+# Import heart images
 heart_Vm = np.rot90(plt.imread('data/20190322-pigb/01-350_Vm_0001.tif'))
 heart_Ca = np.rot90(plt.imread('data/20190322-pigb/01-350_Ca_0001.tif'))
 # Create region of interest (ROI)
@@ -380,10 +383,13 @@ plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, color='r', 
 # Plot Analysis Section
 # Plot trace overlay
 axTracesOverlay.set_title('Vm/Ca Dual Signals', fontsize=fontsize2, weight='semibold')
-plot_trace_overlay(axTracesOverlay, trace_vm=Trace_Vm_LV[5], trace_ca=Trace_Ca_LV[5])
+Trace_overlay = {'Vm': np.genfromtxt('data/20190322-pigb/20-NSR_Vm_30x30-231x317.csv', delimiter=','),
+                 'Ca': np.genfromtxt('data/20190322-pigb/20-NSR_Ca_30x30-931x317.csv', delimiter=',')}
+plot_trace_overlay(axTracesOverlay, trace_vm=Trace_overlay['Vm'], trace_ca=Trace_overlay['Ca'])
+# Import heart images
+heartAnalysis_Vm = heart_Vm
+heartAnalysis_Ca = heart_Ca
 # Import activation maps
-# actMapVm = np.rot90(np.loadtxt('data/20190322-pigb/OLD_06-300/ActMaps/ActMap-06-300_Vm.csv',
-#                                          delimiter=',', skiprows=0))
 actMapVm = np.rot90(np.loadtxt('data/20190322-pigb/ActMaps/ActMap-01-350_Vm.csv',
                                delimiter=',', skiprows=0))
 actMapCa = np.rot90(np.loadtxt('data/20190322-pigb/ActMaps/ActMap-01-350_Ca.csv',
@@ -436,11 +442,11 @@ axMaps_label_y = 0.5
 axMaps_label_size = fontsize2
 axMaps_label_font = fm.FontProperties(size=fontsize3, weight='semibold')
 
-plot_heart(axis=axMap_ActVm, heart_image=heart_Vm, scale_text=False)
+plot_heart(axis=axMap_ActVm, heart_image=heartAnalysis_Vm, scale_text=False)
 img_actMapVm = plot_map(axis=axMap_ActVm, actmap=actMapVm, cmap=cmap_actMap, norm=cmapNorm_actMaps)
 axMap_ActVm.text(axMaps_label_x, axMaps_label_y, 'Vm', transform=axMap_ActVm.transAxes,
                  rotation=90, ha='center', va='center', fontproperties=axMaps_label_font)
-plot_heart(axis=axMap_ActCa, heart_image=heart_Ca, scale_text=False)
+plot_heart(axis=axMap_ActCa, heart_image=heartAnalysis_Ca, scale_text=False)
 img_actMapCa = plot_map(axis=axMap_ActCa, actmap=actMapCa, cmap=cmap_actMap, norm=cmapNorm_actMaps)
 axMap_ActCa.set_ylabel('Ca', fontsize=fontsize3)
 axMap_ActCa.text(axMaps_label_x, axMaps_label_y, 'Ca', transform=axMap_ActCa.transAxes,
