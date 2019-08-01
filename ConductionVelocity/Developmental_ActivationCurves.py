@@ -11,6 +11,10 @@ import matplotlib.colors as colors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import ScientificColourMaps5 as scm
 
+fontsize1, fontsize2, fontsize3, fontsize4 = [14, 10, 8, 6]
+X_CROP = [0, 0]  # to cut from left, right
+Y_CROP = [0, 0]  # to cut from bottom, top
+
 
 def example_plot(axis):
     axis.plot([1, 2])
@@ -26,7 +30,7 @@ def generate_ActMap(conduction_v):
     # Allocate space for the Activation Map
     act_map = np.zeros(shape=(WIDTH, HEIGHT))
     # Spatial resolution (cm/px)
-    resolution = 0.005   # 4 cm / 200 px
+    resolution = 0.005  # 4 cm / 200 px
 
     # Convert conduction velocity from cm/s to px/s
     conduction_v = conduction_v / resolution
@@ -70,24 +74,48 @@ def plot_ActMap(axis, actMap):
     return img
 
 
-def generate_ActCurve(actMap, actMapMax):
+def plot_map(axis, actmap, cmap, norm):
+    # Setup plot
+    height, width, = actmap.shape[0], actmap.shape[1]  # X, Y flipped due to rotation
+    x_crop, y_crop = [X_CROP[0], width - X_CROP[1]], [height - Y_CROP[0], Y_CROP[1]]
+
+    # axis.axis('off')
+    axis.spines['right'].set_visible(False)
+    axis.spines['left'].set_visible(False)
+    axis.spines['top'].set_visible(False)
+    axis.spines['bottom'].set_visible(False)
+    axis.set_yticks([])
+    axis.set_yticklabels([])
+    axis.set_xticks([])
+    axis.set_xticklabels([])
+
+    axis.set_xlim(x_crop)
+    axis.set_ylim(y_crop)
+
+    # Plot Activation Map
+    img = axis.imshow(actmap, norm=norm, cmap=cmap)
+
+    return img
+
+
+def generate_actcurve(actmap, actmap_max):
     # Frame rate (FPS)
     fps = 500
     # frames / ms
     fpms = fps / 1000
     # Number of frames
-    frames = int((np.nanmax(actMap) - np.nanmin(actMap)) * (1 / fpms))
+    frames = int((np.nanmax(actmap) - np.nanmin(actmap)) * (1 / fpms))
 
     # Bins for histogram calculation
-    xbins = np.linspace(start=0, stop=actMap.max(), num=frames)
-    hist = np.histogram(actMap, xbins)
+    xbins = np.linspace(start=0, stop=actmap.max(), num=frames)
+    hist = np.histogram(actmap, xbins)
     # a = np.hstack((rng.normal(size=1000), rng.normal(loc=5, scale=2, size=1000)))
     # tissueact = 100 * np.cumsum(hist(tim,xbins))/allpts;
 
     # Calculate cumulative sum % of activation times
-    tissueact = 100 * np.cumsum(hist[0]) / actMap.size
+    tissueact = 100 * np.cumsum(hist[0]) / actmap.size
     # A array for plotting the activation curve
-    x_axes = np.linspace(start=0, stop=actMap.max(), num=frames-1)
+    x_axes = np.linspace(start=0, stop=actmap.max(), num=frames - 1)
     return x_axes, tissueact
 
 
@@ -122,7 +150,6 @@ axActConst_Pacing = fig.add_subplot(gs0[2])
 axActConst_Ages = fig.add_subplot(gs0[5])
 axActConst_Pacing.set_title('Activation Constants', fontsize=12)
 
-
 # Generate all activation maps
 # Pacing section (both adult)
 actMap_Pacing_Fast = generate_ActMap(conduction_v=50)
@@ -143,20 +170,20 @@ actMap_Ages_ASlow = generate_ActMap(conduction_v=35)
 # actMapIMPORT_Ages_PSlow = np.loadtxt('data/20190717-rata/ActMap-03-150_Vm.csv',
 #                                      delimiter=',', skiprows=0)
 actMap_Ages_PFast = np.loadtxt('data/20190717-rata/ActMap-01-250_Vm.csv',
-                                     delimiter=',', skiprows=0)
+                               delimiter=',', skiprows=0)
 actMap_Ages_PSlow = np.loadtxt('data/20190717-rata/ActMap-03-150_Vm.csv',
-                                     delimiter=',', skiprows=0)
+                               delimiter=',', skiprows=0)
 # Crop imported activation maps
-h1_denom, h2_denom = 2.3, 1.18
-w1_denom, w2_denom = 3, 2
-h, w = actMap_Ages_PFast.shape
-h1, h2 = int(h / h1_denom), int(h / h2_denom)
-w1, w2 = int(w / w1_denom), int(w / w2_denom)
-actMap_Ages_PFast = actMap_Ages_PFast[h1:h2, w1:w2]
-h, w = actMap_Ages_PSlow.shape
-h1, h2 = int(h / h1_denom), int(h / h2_denom)
-w1, w2 = int(w / w1_denom), int(w / w2_denom)
-actMap_Ages_PSlow = actMap_Ages_PSlow[h1:h2, w1:w2]
+# h1_denom, h2_denom = 2.3, 1.18
+# w1_denom, w2_denom = 3, 2
+# h, w = actMap_Ages_PFast.shape
+# h1, h2 = int(h / h1_denom), int(h / h2_denom)
+# w1, w2 = int(w / w1_denom), int(w / w2_denom)
+# actMap_Ages_PFast = actMap_Ages_PFast[h1:h2, w1:w2]
+# h, w = actMap_Ages_PSlow.shape
+# h1, h2 = int(h / h1_denom), int(h / h2_denom)
+# w1, w2 = int(w / w1_denom), int(w / w2_denom)
+# actMap_Ages_PSlow = actMap_Ages_PSlow[h1:h2, w1:w2]
 
 
 actMaps = [actMap_Pacing_Slow, actMap_Pacing_Fast,
@@ -165,26 +192,25 @@ actMaps = [actMap_Pacing_Slow, actMap_Pacing_Fast,
 # Determine max value across all activation maps
 actMapMax = 0
 print('Activation Map max values:')
-for map in actMaps:
-    print(np.nanmax(map))
-    actMapMax = max(actMapMax, np.nanmax(map))
+for actMap in actMaps:
+    print(np.nanmax(actMap))
+    actMapMax = max(actMapMax, np.nanmax(actMap))
 # Round to the nearest X5.0?
 actMapMax = round(actMapMax + 2.6, 1)
 # Normalize across
 # cmap_norm = colors.Normalize(vmin=0, vmax=round(actMapMax + 1.1, -1))
 cmap_norm = colors.Normalize(vmin=0, vmax=actMapMax)
 
-
 # Plot the activation maps
 # Pacing section (both adult)
 # axActMapsVm.set_title('Activation Maps', fontsize=12)
-plot_ActMap(axis=axActMap_Pacing_Fast, actMap=actMap_Pacing_Fast)
-plot_ActMap(axis=axActMap_Pacing_Slow, actMap=actMap_Pacing_Slow)
+plot_map(axis=axActMap_Pacing_Fast, actmap=actMap_Pacing_Fast, cmap=cmap_actMaps, norm=cmap_norm)
+plot_map(axis=axActMap_Pacing_Slow, actmap=actMap_Pacing_Slow, cmap=cmap_actMaps, norm=cmap_norm)
 # Age comparison section
-plot_ActMap(axis=axActMap_Ages_PFast, actMap=actMap_Ages_PFast)
-plot_ActMap(axis=axActMap_Ages_PSlow, actMap=actMap_Ages_PSlow)
+plot_map(axis=axActMap_Ages_PFast, actmap=actMap_Ages_PFast, cmap=cmap_actMaps, norm=cmap_norm)
+plot_map(axis=axActMap_Ages_PSlow, actmap=actMap_Ages_PSlow, cmap=cmap_actMaps, norm=cmap_norm)
 img_colormap = plot_ActMap(axis=axActMap_Ages_AFast, actMap=actMap_Ages_AFast)
-plot_ActMap(axis=axActMap_Ages_ASlow, actMap=actMap_Ages_ASlow)
+plot_map(axis=axActMap_Ages_ASlow, actmap=actMap_Ages_ASlow, cmap=cmap_actMaps, norm=cmap_norm)
 
 # Add colorbar (lower right of act. map)
 ax_ins1 = inset_axes(axActMap_Ages_AFast,
@@ -200,13 +226,13 @@ cb1.ax.tick_params(labelsize=6)
 
 # Generate activation curves
 # Pacing section (both adult)
-actCurve_Fast_x, actCurve_Fast = generate_ActCurve(actMap_Pacing_Fast, actMapMax)
-actCurve_Slow_x, actCurve_Slow = generate_ActCurve(actMap_Pacing_Slow, actMapMax)
+actCurve_Fast_x, actCurve_Fast = generate_actcurve(actMap_Pacing_Fast, actMapMax)
+actCurve_Slow_x, actCurve_Slow = generate_actcurve(actMap_Pacing_Slow, actMapMax)
 # Age comparison section
-actCurve_Ages_PFast_x, actCurve_Ages_PFast = generate_ActCurve(actMap_Ages_PFast, actMapMax)
-actCurve_Ages_PSlow_x, actCurve_Ages_PSlow = generate_ActCurve(actMap_Ages_PSlow, actMapMax)
-actCurve_Ages_AFast_x, actCurve_Ages_AFast = generate_ActCurve(actMap_Ages_AFast, actMapMax)
-actCurve_Ages_ASlow_x, actCurve_Ages_ASlow = generate_ActCurve(actMap_Ages_ASlow, actMapMax)
+actCurve_Ages_PFast_x, actCurve_Ages_PFast = generate_actcurve(actMap_Ages_PFast, actMapMax)
+actCurve_Ages_PSlow_x, actCurve_Ages_PSlow = generate_actcurve(actMap_Ages_PSlow, actMapMax)
+actCurve_Ages_AFast_x, actCurve_Ages_AFast = generate_actcurve(actMap_Ages_AFast, actMapMax)
+actCurve_Ages_ASlow_x, actCurve_Ages_ASlow = generate_actcurve(actMap_Ages_ASlow, actMapMax)
 
 # Plot Pacing activation curves
 axActCurve_Pacing.set_ylabel('Tissue Activation (%)', fontsize=10)
@@ -221,7 +247,7 @@ axActCurve_Ages.set_ylabel('Tissue Activation (%)', fontsize=10)
 axActCurve_Ages.spines['top'].set_visible(False)
 axActCurve_Ages.spines['right'].set_visible(False)
 axActCurve_Ages.plot(actCurve_Ages_PFast_x, actCurve_Ages_PFast, 'r-.')
-axActCurve_Ages.plot(actCurve_Ages_PSlow_x, actCurve_Ages_PSlow, 'k--',)
+axActCurve_Ages.plot(actCurve_Ages_PSlow_x, actCurve_Ages_PSlow, 'k--', )
 axActCurve_Ages.plot(actCurve_Ages_AFast_x, actCurve_Ages_AFast, 'r')
 axActCurve_Ages.plot(actCurve_Ages_ASlow_x, actCurve_Ages_ASlow, 'k')
 axActCurve_Ages.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed')
