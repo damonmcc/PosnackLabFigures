@@ -19,7 +19,7 @@ X_CROP = [0, 80]   # to cut from left, right
 Y_CROP = [30, 80]   # to cut from bottom, top
 
 
-def plot_heart(axis, heart_image, scale_text=True, rois=None):
+def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
     """
     Display an image of a heart on a given axis.
 
@@ -34,11 +34,16 @@ def plot_heart(axis, heart_image, scale_text=True, rois=None):
         The first two dimensions (M, N) define the rows and columns of
         the image.
 
-    scale_text : bool, optional
-            If True, include text with the scale bar.
+    scale : bool, optional
+        If True, include scale bar.
+        Defaults to True.
 
-        Whether to include the scalebar text
-    rois :
+    scale_text : bool, optional
+        If True, include text with the scale bar.
+        Defaults to True.
+
+    rois : list, optional
+        A list of dictionaries with structure {'y': int, 'x': int, 'r': int}
 
     Returns
     -------
@@ -63,16 +68,17 @@ def plot_heart(axis, heart_image, scale_text=True, rois=None):
     # Scale Bar
     scale_px_cm = 1 / 0.0149
     heart_scale = [scale_px_cm, scale_px_cm]  # x, y (pixels/cm)
-    if scale_text:
-        heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
-                                          loc=4, pad=0.2, color='w', frameon=False,
-                                          fontproperties=fm.FontProperties(size=7, weight='bold'))
-    else:
-        # Scale bar, no text
-        heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], ' ',
-                                          loc=4, pad=0.4, color='w', frameon=False,
-                                          fontproperties=fm.FontProperties(size=2, weight='bold'))
-    axis.add_artist(heart_scale_bar)
+    if scale:
+        if scale_text:
+            heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
+                                              loc=4, pad=0.2, color='w', frameon=False,
+                                              fontproperties=fm.FontProperties(size=7, weight='semibold'))
+        else:
+            # Scale bar, no text
+            heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], None, sep=0,
+                                              loc=4, pad=0.1, color='w', frameon=False,
+                                              fontproperties=fm.FontProperties(size=7, weight='semibold'))
+        axis.add_artist(heart_scale_bar)
 
     axis.set_xlim(x_crop)
     axis.set_ylim(y_crop)
@@ -106,9 +112,17 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         # MAX_COUNTS_16BIT
 
         if frac:
-            # convert y-axis from counts to percentage range of max counts
-            data_y = data_y_counts / MAX_COUNTS_16BIT * 100
+            # # convert y-axis from counts to percentage range of max counts
+            # data_y = data_y_counts / MAX_COUNTS_16BIT * 100
+            # axis.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
+
+            # Convert y-axis from counts to dF / F: (F_t - F0) / F0
             axis.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
+            # Get max and min
+            # data_min, data_max = np.nanmin(data_y_counts), np.nanmax(data_y_counts)
+            f_0 = counts_min
+            f_t = data_y_counts
+            data_y = (f_t - f_0) / f_0
         else:
             # Shift y-axis counts to start at zero
             data_y = data_y_counts - counts_min
@@ -116,7 +130,7 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         if filter_lp:
             print('* Filtering data: Low Pass')
             dt = 1 / 408
-            freq = 100
+            freq = 75
 
             fs = 1 / dt
             wn = (freq / (fs / 2))
@@ -125,7 +139,8 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
             print('* Data Filtered')
 
         if norm:
-            # # Normalize each trace
+            # Normalize each trace
+            # Get max and min
             data_min, data_max = np.nanmin(data_y), np.nanmax(data_y)
             data_y = np.interp(data_y, (data_min, data_max), (0, 1))
             if invert:
@@ -198,19 +213,19 @@ axImage_Vm = fig.add_subplot(gsImages[0])
 axImage_Ca = fig.add_subplot(gsImages[1])
 
 trace_wspace = 0.4
-trace_hspace = 0.4
+trace_hspace = 0.3
 signal_hspace = 0.3
 # Build NSR Traces section
 gsTracesNSR = gs0[1].subgridspec(2, 1, hspace=signal_hspace)
 # Vm
-gsTracesNSR_Vm = gsTracesNSR[0].subgridspec(2, 2, wspace=trace_wspace)
+gsTracesNSR_Vm = gsTracesNSR[0].subgridspec(2, 2, hspace=trace_hspace, wspace=trace_wspace)
 # Pixel
 axTracesNSR_Vm_RV, axTracesNSR_Vm_LV = fig.add_subplot(gsTracesNSR_Vm[0]), fig.add_subplot(gsTracesNSR_Vm[2])
 # 5x5
 axTracesNSR_Vm_RV_5x5, axTracesNSR_Vm_LV_5x5 = fig.add_subplot(gsTracesNSR_Vm[1]), fig.add_subplot(gsTracesNSR_Vm[3])
 
 # Ca
-gsTracesNSR_Ca = gsTracesNSR[1].subgridspec(2, 2, wspace=trace_wspace)
+gsTracesNSR_Ca = gsTracesNSR[1].subgridspec(2, 2, hspace=trace_hspace, wspace=trace_wspace)
 # Pixel
 axTracesNSR_Ca_RV, axTracesNSR_Ca_LV = fig.add_subplot(gsTracesNSR_Ca[0]), fig.add_subplot(gsTracesNSR_Ca[2])
 # 5x5
@@ -220,14 +235,14 @@ axTracesNSR_Ca_RV_5x5, axTracesNSR_Ca_LV_5x5 = fig.add_subplot(gsTracesNSR_Ca[1]
 # Build VF Traces section
 gsTracesVF = gs0[2].subgridspec(2, 1, hspace=signal_hspace)
 # Vm
-gsTracesVF_Vm = gsTracesVF[0].subgridspec(2, 2, wspace=trace_wspace)
+gsTracesVF_Vm = gsTracesVF[0].subgridspec(2, 2, hspace=trace_hspace, wspace=trace_wspace)
 # Pixel
 axTracesVF_Vm_RV, axTracesVF_Vm_LV = fig.add_subplot(gsTracesVF_Vm[0]), fig.add_subplot(gsTracesVF_Vm[2])
 # 5x5
 axTracesVF_Vm_RV_5x5, axTracesVF_Vm_LV_5x5 = fig.add_subplot(gsTracesVF_Vm[1]), fig.add_subplot(gsTracesVF_Vm[3])
 
 # Ca
-gsTracesVF_Ca = gsTracesVF[1].subgridspec(2, 2, wspace=trace_wspace)
+gsTracesVF_Ca = gsTracesVF[1].subgridspec(2, 2, hspace=trace_hspace, wspace=trace_wspace)
 # Pixel
 axTracesVF_Ca_RV, axTracesVF_Ca_LV = fig.add_subplot(gsTracesVF_Ca[0]), fig.add_subplot(gsTracesVF_Ca[2])
 # 5x5
@@ -282,7 +297,8 @@ TraceVF_Ca_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_15x15-300x310.c
 
 # Plot heart images
 axImage_Vm.set_title('Vm', size=fontsize1, weight='semibold')
-plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, rois=RoisVF_Vm)
+plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, scale_text=False,
+           rois=RoisVF_Vm)
 # axImage_Vm.text(axImage_label_x, axImage_label_y, 'Vm', transform=axImage_Vm.transAxes,
 #                 rotation=90, ha='center', va='center', fontproperties=axImages_label_font)
 axImage_Ca.set_title('Ca', size=fontsize1, weight='semibold')

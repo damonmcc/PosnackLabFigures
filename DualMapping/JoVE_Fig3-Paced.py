@@ -2,6 +2,7 @@ import numpy as np
 import scipy.signal as sig
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+import matplotlib.image as mpimg
 from matplotlib import ticker
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
@@ -12,8 +13,8 @@ import ScientificColourMaps5 as SCMaps
 
 MAX_COUNTS_16BIT = 65536
 colors_rois = ['b', 'r', 'k']
-colors_signals = ['0', '0']  # Vm: dark, Ca: light
-lines_signals = ['-', '--']  # Vm: dark, Ca: light
+colors_signals = ['0', '0.5']  # Vm: dark, Ca: light
+lines_signals = ['-', '-']  # Vm: dark, Ca: light
 cmap_actMap = SCMaps.lajolla
 # cmap_durMap = SCMaps.bilbao
 # cmap_durMap = SCMaps.oslo.reversed()
@@ -26,7 +27,7 @@ X_CROP = [40, 20]   # to cut from left, right
 Y_CROP = [80, 50]   # to cut from bottom, top
 
 
-def plot_heart(axis, heart_image, scale_text=True, rois=None):
+def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
     """
     Display an image of a heart on a given axis.
 
@@ -41,11 +42,16 @@ def plot_heart(axis, heart_image, scale_text=True, rois=None):
         The first two dimensions (M, N) define the rows and columns of
         the image.
     
+    scale : bool, optional
+        If True, include scale bar.
+        Defaults to True.
+
     scale_text : bool, optional
-            If True, include text with the scale bar.
-            
-        Whether to include the scalebar text
-    rois :
+        If True, include text with the scale bar.
+        Defaults to True.
+
+    rois : list, optional
+        A list of dictionaries with structure {'y': int, 'x': int, 'r': int}
 
     Returns
     -------
@@ -70,16 +76,17 @@ def plot_heart(axis, heart_image, scale_text=True, rois=None):
     # Scale Bar
     scale_px_cm = 1 / 0.0149
     heart_scale = [scale_px_cm, scale_px_cm]  # x, y (pixels/cm)
-    if scale_text:
-        heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
-                                          loc=4, pad=0.2, color='w', frameon=False,
-                                          fontproperties=fm.FontProperties(size=7, weight='bold'))
-    else:
-        # Scale bar, no text
-        heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], ' ',
-                                          loc=4, pad=0.4, color='w', frameon=False,
-                                          fontproperties=fm.FontProperties(size=2, weight='bold'))
-    axis.add_artist(heart_scale_bar)
+    if scale:
+        if scale_text:
+            heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '1 cm',
+                                              loc=4, pad=0.2, color='w', frameon=False,
+                                              fontproperties=fm.FontProperties(size=7, weight='semibold'))
+        else:
+            # Scale bar, no text
+            heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], None, sep=0,
+                                              loc=4, pad=0.1, color='w', frameon=False,
+                                              fontproperties=fm.FontProperties(size=7, weight='semibold'))
+        axis.add_artist(heart_scale_bar)
 
     axis.set_xlim(x_crop)
     axis.set_ylim(y_crop)
@@ -113,9 +120,17 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         # MAX_COUNTS_16BIT
 
         if frac:
-            # convert y-axis from counts to percentage range of max counts
-            data_y = data_y_counts / MAX_COUNTS_16BIT * 100
+            # # convert y-axis from counts to percentage range of max counts
+            # data_y = data_y_counts / MAX_COUNTS_16BIT * 100
+            # axis.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
+
+            # Convert y-axis from counts to dF / F: (F_t - F0) / F0
             axis.yaxis.set_major_formatter(ticker.FormatStrFormatter('%.2f'))
+            # Get max and min
+            # data_min, data_max = np.nanmin(data_y_counts), np.nanmax(data_y_counts)
+            f_0 = counts_min
+            f_t = data_y_counts
+            data_y = (f_t - f_0) / f_0
         else:
             # Shift y-axis counts to start at zero
             data_y = data_y_counts - counts_min
@@ -123,7 +138,7 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         if filter_lp:
             print('* Filtering data: Low Pass')
             dt = 1 / 408
-            freq = 100
+            freq = 75
 
             fs = 1 / dt
             wn = (freq / (fs / 2))
@@ -132,7 +147,8 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
             print('* Data Filtered')
 
         if norm:
-            # # Normalize each trace
+            # Normalize each trace
+            # Get max and min
             data_min, data_max = np.nanmin(data_y), np.nanmax(data_y)
             data_y = np.interp(data_y, (data_min, data_max), (0, 1))
             if invert:
@@ -281,16 +297,19 @@ gsImages = gsData[0].subgridspec(2, 1)  # 2 rows, 1 columns for Activation Maps
 axImage_Vm = fig.add_subplot(gsImages[0])
 axImage_Ca = fig.add_subplot(gsImages[1])
 # Build paced traces section
-gsTraces = gsData[1].subgridspec(2, 1)
+trace_wspace = 0.2
+trace_hspace = 0.3
+signal_hspace = 0.3
+gsTraces = gsData[1].subgridspec(2, 1, hspace=signal_hspace)
 # Vm
-gsTraces_Vm = gsTraces[0].subgridspec(2, 2)
+gsTraces_Vm = gsTraces[0].subgridspec(2, 2, hspace=trace_hspace, wspace=trace_wspace)
 # Pixel
 axTraces_Vm_RV, axTraces_Vm_LV = fig.add_subplot(gsTraces_Vm[0]), fig.add_subplot(gsTraces_Vm[2])
 # 5x5
 axTraces_Vm_RV_5x5, axTraces_Vm_LV_5x5 = fig.add_subplot(gsTraces_Vm[1]), fig.add_subplot(gsTraces_Vm[3])
 
 # Ca
-gsTraces_Ca = gsTraces[1].subgridspec(2, 2)
+gsTraces_Ca = gsTraces[1].subgridspec(2, 2, hspace=trace_hspace, wspace=trace_wspace)
 # Pixel
 axTraces_Ca_RV, axTraces_Ca_LV = fig.add_subplot(gsTraces_Ca[0]), fig.add_subplot(gsTraces_Ca[2])
 # 5x5
@@ -332,7 +351,7 @@ plot_heart(axis=axImage_Vm, heart_image=heart_Vm, rois=Rois_Vm, scale_text=False
 axImage_Vm.text(axImage_label_x, axImage_label_y, 'Vm', transform=axImage_Vm.transAxes,
                 rotation=90, ha='center', va='center', fontproperties=axImages_label_font)
 # axImage_Ca.set_title('Ca', fontsize=14)
-plot_heart(axis=axImage_Ca, heart_image=heart_Ca, rois=Rois_Ca, scale_text=False)
+plot_heart(axis=axImage_Ca, heart_image=heart_Ca, rois=Rois_Ca, scale_text=True)
 axImage_Ca.text(axImage_label_x, axImage_label_y, 'Ca', transform=axImage_Ca.transAxes,
                 rotation=90, ha='center', va='center', fontproperties=axImages_label_font)
 
@@ -399,6 +418,9 @@ durMapVm = np.rot90(np.loadtxt('data/20190322-pigb/APDMaps/APD-01-350_Vm.csv',
                                delimiter=',', skiprows=0))
 durMapCa = np.rot90(np.loadtxt('data/20190322-pigb/APDMaps/APD-01-350_Ca.csv',
                                delimiter=',', skiprows=0))
+# Import restitution curve image
+restitution_img = mpimg.imread('data/Pigs_RestitutionCurve_APD80_CAD80.png')
+
 # Crop edges of duration maps, replace with NaNs
 # durMapVm[0:150, :] = np.nan
 # durMapCa[0:150, :] = np.nan
@@ -442,11 +464,11 @@ axMaps_label_y = 0.5
 axMaps_label_size = fontsize2
 axMaps_label_font = fm.FontProperties(size=fontsize3, weight='semibold')
 
-plot_heart(axis=axMap_ActVm, heart_image=heartAnalysis_Vm, scale_text=False)
+plot_heart(axis=axMap_ActVm, heart_image=heartAnalysis_Vm, scale=False)
 img_actMapVm = plot_map(axis=axMap_ActVm, actmap=actMapVm, cmap=cmap_actMap, norm=cmapNorm_actMaps)
 axMap_ActVm.text(axMaps_label_x, axMaps_label_y, 'Vm', transform=axMap_ActVm.transAxes,
                  rotation=90, ha='center', va='center', fontproperties=axMaps_label_font)
-plot_heart(axis=axMap_ActCa, heart_image=heartAnalysis_Ca, scale_text=False)
+plot_heart(axis=axMap_ActCa, heart_image=heartAnalysis_Ca, scale=False)
 img_actMapCa = plot_map(axis=axMap_ActCa, actmap=actMapCa, cmap=cmap_actMap, norm=cmapNorm_actMaps)
 axMap_ActCa.set_ylabel('Ca', fontsize=fontsize3)
 axMap_ActCa.text(axMaps_label_x, axMaps_label_y, 'Ca', transform=axMap_ActCa.transAxes,
@@ -464,7 +486,7 @@ cb_act.ax.tick_params(labelsize=fontsize4)
 
 # Duration Maps
 axMap_APD.set_title('Repolarization (80%)', fontsize=fontsize3, weight='semibold')
-plot_heart(axis=axMap_APD, heart_image=heart_Vm, scale_text=False)
+plot_heart(axis=axMap_APD, heart_image=heart_Vm, scale=False)
 img_durMapVm = plot_map(axis=axMap_APD, actmap=durMapVm, cmap=cmap_durMap, norm=cmapNorm_durMaps)
 plot_heart(axis=axMap_CAD, heart_image=heart_Vm, scale_text=False)
 img_durMapCa = plot_map(axis=axMap_CAD, actmap=durMapCa, cmap=cmap_durMap, norm=cmapNorm_durMaps)
@@ -479,6 +501,11 @@ cb_dur.ax.set_xlabel('ms', fontsize=fontsize4)
 cb_dur.ax.yaxis.set_major_locator(ticker.LinearLocator(3))
 cb_dur.ax.yaxis.set_minor_locator(ticker.LinearLocator(5))
 cb_dur.ax.tick_params(labelsize=fontsize4)
+
+# Duration restitution curves
+axMapStats.set_title('Duration Restitution Curves', fontsize=fontsize3, weight='semibold')
+# axMapStats.imshow(restitution_img)
+axMapStats.axis('off')
 
 # Fill rest with example plots
 # Data
@@ -502,7 +529,7 @@ cb_dur.ax.tick_params(labelsize=fontsize4)
 # example_plot(axMap_APD)
 # example_plot(axMap_CAD)
 
-example_plot(axMapStats)
+# example_plot(axMapStats)
 
 
 # Show and save figure
