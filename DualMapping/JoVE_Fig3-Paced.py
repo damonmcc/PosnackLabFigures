@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.image as mpimg
 from matplotlib import ticker
+from matplotlib import rcParams
 from matplotlib.lines import Line2D
 from matplotlib.patches import Circle
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
@@ -22,6 +23,7 @@ cmap_actMap = SCMaps.lajolla
 # cmap_durMap = SCMaps.turku.reversed()
 cmap_durMap = SCMaps.lajolla
 # colors_maps = ['#db7a59', '#236C46']  # Act: orange, Dur: green
+rcParams['font.family'] = "Arial"
 fontsize1, fontsize2, fontsize3, fontsize4 = [14, 10, 8, 6]
 X_CROP = [40, 20]   # to cut from left, right
 Y_CROP = [80, 50]   # to cut from bottom, top
@@ -83,9 +85,9 @@ def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
                                               fontproperties=fm.FontProperties(size=7, weight='semibold'))
         else:
             # Scale bar, no text
-            heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], None, sep=0,
-                                              loc=4, pad=0.1, color='w', frameon=False,
-                                              fontproperties=fm.FontProperties(size=7, weight='semibold'))
+            heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '', sep=0,
+                                              loc=4, pad=1, color='w', frameon=False,
+                                              fontproperties=fm.FontProperties(size=2))
         axis.add_artist(heart_scale_bar)
 
     axis.set_xlim(x_crop)
@@ -225,7 +227,7 @@ def plot_trace_overlay(axis, trace_vm, trace_ca):
     axis.spines['bottom'].set_visible(False)
     # ECG Scale: ms and Norm. Fluor. bars forming an L
     ecg_scale_time = [50, 250 / 1000]  # 100 ms, 0.25 Norm. Fluor.
-    ecg_scale_origin = [axis.get_xlim()[1] - ecg_scale_time[0], axis.get_ylim()[0] + 0.01]
+    ecg_scale_origin = [axis.get_xlim()[1] - (1.5 * ecg_scale_time[0]), axis.get_ylim()[0] + 0.01]
     # ecg_scale_origin = [axis.get_xlim()[1] - 1.5 * ecg_scale_time[0], axis.get_ylim()[0] + 0.01]
     # ecg_scale_origin = [axis.get_xlim()[1] - 20, axis.get_ylim()[0] + 0.3]
     ecg_scale_origin_pad = [2, 0.05]
@@ -245,7 +247,7 @@ def plot_trace_overlay(axis, trace_vm, trace_ca):
     legend_lines = [Line2D([0], [0], color=colors_signals[0], ls=lines_signals[0], lw=1),
                     Line2D([0], [0], color=colors_signals[1], ls=lines_signals[1], lw=1)]
     axis.legend(legend_lines, ['Vm', 'Ca'],
-                loc='upper right', bbox_to_anchor=(1.05, 1),
+                loc='upper right', bbox_to_anchor=(1, 1),
                 ncol=1, prop={'size': 6}, labelspacing=1, numpoints=1, frameon=False)
 
 
@@ -317,7 +319,7 @@ axTraces_Ca_RV_5x5, axTraces_Ca_LV_5x5 = fig.add_subplot(gsTraces_Ca[1]), fig.ad
 
 # Analysis Section
 # 3 columns trace overlay, maps, and map statistics
-gsAnalysis = gsfig[1].subgridspec(1, 3, width_ratios=[0.35, 0.35, 0.3])  # Overall: ? row, ? columns
+gsAnalysis = gsfig[1].subgridspec(1, 4, width_ratios=[0.35, 0.35, 0.15, 0.15])  # Overall: ? row, ? columns
 # Build trace overlay section
 axTracesOverlay = fig.add_subplot(gsAnalysis[0])
 # Build maps section
@@ -327,7 +329,8 @@ axMap_ActCa = fig.add_subplot(gsMaps[2])
 axMap_APD = fig.add_subplot(gsMaps[1])
 axMap_CAD = fig.add_subplot(gsMaps[3])
 # Build map statistics section
-axMapStats = fig.add_subplot(gsAnalysis[2])
+axMapStats1 = fig.add_subplot(gsAnalysis[2])
+axMapStats2 = fig.add_subplot(gsAnalysis[3])
 
 # Plot Data Section
 # Import heart images
@@ -347,11 +350,11 @@ axImage_label_x = -0.15
 axImage_label_y = 0.5
 axImages_label_font = fm.FontProperties(size=fontsize2, weight='semibold')
 
-plot_heart(axis=axImage_Vm, heart_image=heart_Vm, rois=Rois_Vm, scale_text=False)
+plot_heart(axis=axImage_Vm, heart_image=heart_Vm, rois=Rois_Vm, scale_text=True)
 axImage_Vm.text(axImage_label_x, axImage_label_y, 'Vm', transform=axImage_Vm.transAxes,
                 rotation=90, ha='center', va='center', fontproperties=axImages_label_font)
 # axImage_Ca.set_title('Ca', fontsize=14)
-plot_heart(axis=axImage_Ca, heart_image=heart_Ca, rois=Rois_Ca, scale_text=True)
+plot_heart(axis=axImage_Ca, heart_image=heart_Ca, rois=Rois_Ca, scale_text=False)
 axImage_Ca.text(axImage_label_x, axImage_label_y, 'Ca', transform=axImage_Ca.transAxes,
                 rotation=90, ha='center', va='center', fontproperties=axImages_label_font)
 
@@ -401,7 +404,7 @@ plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, color='r', 
 
 # Plot Analysis Section
 # Plot trace overlay
-axTracesOverlay.set_title('Vm/Ca Dual Signals', fontsize=fontsize2, weight='semibold')
+axTracesOverlay.set_title('Dual Signals', fontsize=fontsize2, weight='semibold')
 Trace_overlay = {'Vm': np.genfromtxt('data/20190322-pigb/20-NSR_Vm_30x30-231x317.csv', delimiter=','),
                  'Ca': np.genfromtxt('data/20190322-pigb/20-NSR_Ca_30x30-931x317.csv', delimiter=',')}
 plot_trace_overlay(axTracesOverlay, trace_vm=Trace_overlay['Vm'], trace_ca=Trace_overlay['Ca'])
@@ -464,11 +467,11 @@ axMaps_label_y = 0.5
 axMaps_label_size = fontsize2
 axMaps_label_font = fm.FontProperties(size=fontsize3, weight='semibold')
 
-plot_heart(axis=axMap_ActVm, heart_image=heartAnalysis_Vm, scale=False)
+plot_heart(axis=axMap_ActVm, heart_image=heartAnalysis_Vm, scale_text=False)
 img_actMapVm = plot_map(axis=axMap_ActVm, actmap=actMapVm, cmap=cmap_actMap, norm=cmapNorm_actMaps)
 axMap_ActVm.text(axMaps_label_x, axMaps_label_y, 'Vm', transform=axMap_ActVm.transAxes,
                  rotation=90, ha='center', va='center', fontproperties=axMaps_label_font)
-plot_heart(axis=axMap_ActCa, heart_image=heartAnalysis_Ca, scale=False)
+plot_heart(axis=axMap_ActCa, heart_image=heartAnalysis_Ca, scale_text=False)
 img_actMapCa = plot_map(axis=axMap_ActCa, actmap=actMapCa, cmap=cmap_actMap, norm=cmapNorm_actMaps)
 axMap_ActCa.set_ylabel('Ca', fontsize=fontsize3)
 axMap_ActCa.text(axMaps_label_x, axMaps_label_y, 'Ca', transform=axMap_ActCa.transAxes,
@@ -476,7 +479,7 @@ axMap_ActCa.text(axMaps_label_x, axMaps_label_y, 'Ca', transform=axMap_ActCa.tra
 # Add colorbar (activation maps)
 ax_cmap_act = inset_axes(axMap_ActCa,
                          width="8%", height="80%",  # % of parent_bbox width, height
-                         loc=10, bbox_to_anchor=(0.75, 0.5, 1, 1), bbox_transform=axMap_ActCa.transAxes, borderpad=0)
+                         loc=10, bbox_to_anchor=(0.65, 0.5, 1, 1), bbox_transform=axMap_ActCa.transAxes, borderpad=0)
 cb_act = plt.colorbar(img_actMapCa, cax=ax_cmap_act, orientation="vertical")
 cb_act.ax.set_xlabel('ms', fontsize=fontsize4)
 # cb1.set_label('ms', fontsize=fontsize4)
@@ -486,7 +489,7 @@ cb_act.ax.tick_params(labelsize=fontsize4)
 
 # Duration Maps
 axMap_APD.set_title('Repolarization (80%)', fontsize=fontsize3, weight='semibold')
-plot_heart(axis=axMap_APD, heart_image=heart_Vm, scale=False)
+plot_heart(axis=axMap_APD, heart_image=heart_Vm, scale_text=False)
 img_durMapVm = plot_map(axis=axMap_APD, actmap=durMapVm, cmap=cmap_durMap, norm=cmapNorm_durMaps)
 plot_heart(axis=axMap_CAD, heart_image=heart_Vm, scale_text=False)
 img_durMapCa = plot_map(axis=axMap_CAD, actmap=durMapCa, cmap=cmap_durMap, norm=cmapNorm_durMaps)
@@ -494,7 +497,7 @@ img_durMapCa = plot_map(axis=axMap_CAD, actmap=durMapCa, cmap=cmap_durMap, norm=
 # Add colorbar (duration maps)
 ax_cmap_dur = inset_axes(axMap_CAD,
                          width="8%", height="80%",  # % of parent_bbox width, height
-                         loc=10, bbox_to_anchor=(0.75, 0.5, 1, 1), bbox_transform=axMap_CAD.transAxes, borderpad=0)
+                         loc=10, bbox_to_anchor=(0.65, 0.5, 1, 1), bbox_transform=axMap_CAD.transAxes, borderpad=0)
 cb_dur = plt.colorbar(img_durMapCa, cax=ax_cmap_dur, orientation="vertical")
 cb_dur.ax.set_xlabel('ms', fontsize=fontsize4)
 # cb_dur.ax.set_ylim([durMap_min, int(durMapMax)])
@@ -503,9 +506,11 @@ cb_dur.ax.yaxis.set_minor_locator(ticker.LinearLocator(5))
 cb_dur.ax.tick_params(labelsize=fontsize4)
 
 # Duration restitution curves
-axMapStats.set_title('Duration Restitution Curves', fontsize=fontsize3, weight='semibold')
+axMapStats1.set_title('Restitution Curves', fontsize=fontsize3, weight='semibold')
+axMapStats2.set_title('Repolarization', fontsize=fontsize3, weight='semibold')
 # axMapStats.imshow(restitution_img)
-axMapStats.axis('off')
+axMapStats1.axis('off')
+axMapStats2.axis('off')
 
 # Fill rest with example plots
 # Data

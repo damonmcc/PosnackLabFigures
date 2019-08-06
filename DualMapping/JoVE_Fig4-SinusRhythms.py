@@ -4,6 +4,7 @@ from decimal import *
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from matplotlib import ticker
+from matplotlib import rcParams
 from matplotlib.patches import Ellipse, Circle, Wedge
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
@@ -14,6 +15,7 @@ import warnings
 
 MAX_COUNTS_16BIT = 65536
 colors_rois = ['b', 'r', 'k']
+rcParams['font.family'] = "Arial"
 fontsize1, fontsize2, fontsize3, fontsize4 = [14, 10, 8, 6]
 X_CROP = [0, 80]   # to cut from left, right
 Y_CROP = [30, 80]   # to cut from bottom, top
@@ -75,9 +77,9 @@ def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
                                               fontproperties=fm.FontProperties(size=7, weight='semibold'))
         else:
             # Scale bar, no text
-            heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], None, sep=0,
-                                              loc=4, pad=0.1, color='w', frameon=False,
-                                              fontproperties=fm.FontProperties(size=7, weight='semibold'))
+            heart_scale_bar = AnchoredSizeBar(axis.transData, heart_scale[0], '', sep=0,
+                                              loc=4, pad=1, color='w', frameon=False,
+                                              fontproperties=fm.FontProperties(size=2))
         axis.add_artist(heart_scale_bar)
 
     axis.set_xlim(x_crop)
@@ -297,18 +299,19 @@ TraceVF_Ca_LV = {1: np.genfromtxt('data/20190322-piga/19-VFIB_Ca_15x15-300x310.c
 
 # Plot heart images
 axImage_Vm.set_title('Vm', size=fontsize1, weight='semibold')
-plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, scale_text=False,
+plot_heart(axis=axImage_Vm, heart_image=heart_VF_Vm, scale_text=True,
            rois=RoisVF_Vm)
 # axImage_Vm.text(axImage_label_x, axImage_label_y, 'Vm', transform=axImage_Vm.transAxes,
 #                 rotation=90, ha='center', va='center', fontproperties=axImages_label_font)
 axImage_Ca.set_title('Ca', size=fontsize1, weight='semibold')
-plot_heart(axis=axImage_Ca, heart_image=heart_VF_Ca, rois=RoisVF_Vm)
+plot_heart(axis=axImage_Ca, heart_image=heart_VF_Ca, scale_text=False,
+           rois=RoisVF_Vm)
 
 
 idx_end = len(TraceNSR_Vm_RV[1]) - 300
 idx_span = 512 + 300
 axTracesNSR_Vm_RV.set_title('15x15 Pixel', fontsize=fontsize2, weight='semibold')
-axTracesNSR_Vm_RV_5x5.set_title('39x30 Pixel', fontsize=fontsize2, weight='semibold')
+axTracesNSR_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=fontsize2, weight='semibold')
 axTraces_label_x = -0.25
 axTraces_label_y = 0.5
 axTraces_label_font = fm.FontProperties(size=fontsize3, weight='semibold')
@@ -342,7 +345,7 @@ plot_trace(axTracesNSR_Ca_LV_5x5, TraceNSR_Ca_LV[5], imagej=True, fps=408,
 
 # Plot VF traces
 axTracesVF_Vm_RV.set_title('15x15 Pixel', fontsize=fontsize2, weight='semibold')
-axTracesVF_Vm_RV_5x5.set_title('39x30 Pixel', fontsize=fontsize2, weight='semibold')
+axTracesVF_Vm_RV_5x5.set_title('30x30 Pixel', fontsize=fontsize2, weight='semibold')
 # Vm
 plot_trace(axTracesVF_Vm_RV, TraceVF_Vm_RV[1], imagej=True, fps=408,
            color='b', x_span=idx_span, x_ticks=False)
