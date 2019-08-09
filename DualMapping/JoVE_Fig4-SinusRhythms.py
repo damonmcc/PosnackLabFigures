@@ -203,7 +203,7 @@ axText.axis('off')
 # axText.set_title('Sinus Rhythm', fontsize=18)
 axText.text(0.425, 1, 'Sinus Rhythm',
             ha='center', va='top', size=fontsize1, weight='semibold')
-axText.text(0.825, 1, 'VF',
+axText.text(0.825, 1, 'Ventricular Fibrillation',
             ha='center', va='top', size=fontsize1, weight='semibold')
 
 # 3 columns for data
