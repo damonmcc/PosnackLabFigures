@@ -9,8 +9,9 @@ from matplotlib import ticker
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
-import ScientificColourMaps5 as scm
+import ScientificColourMaps5 as SCMaps
 
+cmap_actMap = SCMaps.lajolla
 fontsize1, fontsize2, fontsize3, fontsize4 = [14, 10, 8, 6]
 X_CROP = [0, 0]  # to cut from left, right
 Y_CROP = [0, 0]  # to cut from bottom, top
@@ -25,15 +26,16 @@ def example_plot(axis):
 
 def generate_ActMap(conduction_v):
     # Dimensions of model data (px)
-    HEIGHT = 200
+    HEIGHT = 400
     WIDTH = 200
     # Allocate space for the Activation Map
-    act_map = np.zeros(shape=(WIDTH, HEIGHT))
+    act_map = np.zeros(shape=(HEIGHT, WIDTH))
     # Spatial resolution (cm/px)
     resolution = 0.005  # 4 cm / 200 px
+    # resolution = 0.0149  # pig video resolution
 
     # Convert conduction velocity from cm/s to px/s
-    conduction_v = conduction_v / resolution
+    conduction_v_px = conduction_v / resolution
     # # Convert dimensions to cm
     # HEIGHT = HEIGHT * resolution
     # WIDTH = WIDTH * resolution
@@ -45,33 +47,11 @@ def generate_ActMap(conduction_v):
         # Compute the distance from the center (cm)
         d = math.sqrt((abs(origin_x - ix) ** 2 + abs((origin_y - iy) ** 2)))
         # Assign the time associated with that distance from the point of activation
-        act_map[ix, iy] = d / conduction_v
+        act_map[ix, iy] = d / conduction_v_px
         # Convert time from s to ms
         act_map[ix, iy] = act_map[ix, iy] * 1000
-    print('Isotropic act. map generated')
+    print('Isotropic act. map generated. CV = ', conduction_v, ' cm/s')
     return act_map
-
-
-def plot_ActMap(axis, actMap):
-    # Setup plot
-    height, width, = actMap.shape[1], actMap.shape[0]
-    # axis.axis('off')
-    axis.spines['right'].set_visible(False)
-    axis.spines['left'].set_visible(False)
-    axis.spines['top'].set_visible(False)
-    axis.spines['bottom'].set_visible(False)
-    axis.set_yticks([])
-    axis.set_yticklabels([])
-    axis.set_xticks([])
-    axis.set_xticklabels([])
-    # axis.set_ylabel('Vm', fontsize=18)
-    # axis.set_xlim(x_crop)
-    # axis.set_ylim(y_crop)
-
-    # Plot Activation Map
-    img = axis.imshow(actMap, norm=cmap_norm, cmap=cmap_actMaps)
-
-    return img
 
 
 def plot_map(axis, actmap, cmap, norm):
@@ -136,8 +116,6 @@ axActMap_Ages_PSlow = fig.add_subplot(gsActMaps_Ages[1])
 axActMap_Ages_AFast = fig.add_subplot(gsActMaps_Ages[2])
 axActMap_Ages_ASlow = fig.add_subplot(gsActMaps_Ages[3])
 # axActCurve_Ages.set_title('Activation Constants', fontsize=12)
-# Set activation map color map
-cmap_actMaps = scm.lajolla
 
 # Setup Activation Curve section
 axActCurve_Pacing = fig.add_subplot(gs0[1])
@@ -195,22 +173,21 @@ print('Activation Map max values:')
 for actMap in actMaps:
     print(np.nanmax(actMap))
     actMapMax = max(actMapMax, np.nanmax(actMap))
-# Round to the nearest X5.0?
-actMapMax = round(actMapMax + 2.6, 1)
-# Normalize across
-# cmap_norm = colors.Normalize(vmin=0, vmax=round(actMapMax + 1.1, -1))
-cmap_norm = colors.Normalize(vmin=0, vmax=actMapMax)
+print('Activation Maps max value: ', actMapMax)
+# Create normalization range for all activation maps (round up to nearest 10)
+cmap_norm = colors.Normalize(vmin=0, vmax=round(actMapMax + 5.1, -1))
+
 
 # Plot the activation maps
 # Pacing section (both adult)
 # axActMapsVm.set_title('Activation Maps', fontsize=12)
-plot_map(axis=axActMap_Pacing_Fast, actmap=actMap_Pacing_Fast, cmap=cmap_actMaps, norm=cmap_norm)
-plot_map(axis=axActMap_Pacing_Slow, actmap=actMap_Pacing_Slow, cmap=cmap_actMaps, norm=cmap_norm)
+plot_map(axis=axActMap_Pacing_Fast, actmap=actMap_Pacing_Fast, cmap=cmap_actMap, norm=cmap_norm)
+plot_map(axis=axActMap_Pacing_Slow, actmap=actMap_Pacing_Slow, cmap=cmap_actMap, norm=cmap_norm)
 # Age comparison section
-plot_map(axis=axActMap_Ages_PFast, actmap=actMap_Ages_PFast, cmap=cmap_actMaps, norm=cmap_norm)
-plot_map(axis=axActMap_Ages_PSlow, actmap=actMap_Ages_PSlow, cmap=cmap_actMaps, norm=cmap_norm)
-img_colormap = plot_ActMap(axis=axActMap_Ages_AFast, actMap=actMap_Ages_AFast)
-plot_map(axis=axActMap_Ages_ASlow, actmap=actMap_Ages_ASlow, cmap=cmap_actMaps, norm=cmap_norm)
+plot_map(axis=axActMap_Ages_PFast, actmap=actMap_Ages_PFast, cmap=cmap_actMap, norm=cmap_norm)
+plot_map(axis=axActMap_Ages_PSlow, actmap=actMap_Ages_PSlow, cmap=cmap_actMap, norm=cmap_norm)
+img_colormap = plot_map(axis=axActMap_Ages_AFast, actmap=actMap_Ages_AFast, cmap=cmap_actMap, norm=cmap_norm)
+plot_map(axis=axActMap_Ages_ASlow, actmap=actMap_Ages_ASlow, cmap=cmap_actMap, norm=cmap_norm)
 
 # Add colorbar (lower right of act. map)
 ax_ins1 = inset_axes(axActMap_Ages_AFast,
@@ -220,11 +197,12 @@ ax_ins1 = inset_axes(axActMap_Ages_AFast,
                      borderpad=0)
 cb1 = plt.colorbar(img_colormap, cax=ax_ins1, orientation="horizontal")
 cb1.set_label('Activation Time (ms)', fontsize=6)
-cb1.ax.xaxis.set_minor_locator(ticker.MultipleLocator(5))
-cb1.ax.xaxis.set_major_locator(ticker.MultipleLocator(10))
-cb1.ax.tick_params(labelsize=6)
+cb1.ax.xaxis.set_major_locator(ticker.LinearLocator(3))
+cb1.ax.xaxis.set_minor_locator(ticker.LinearLocator(5))
+cb1.ax.tick_params(labelsize=fontsize4)
 
 # Generate activation curves
+# Red: Fast, Black: Slow
 # Pacing section (both adult)
 actCurve_Fast_x, actCurve_Fast = generate_actcurve(actMap_Pacing_Fast, actMapMax)
 actCurve_Slow_x, actCurve_Slow = generate_actcurve(actMap_Pacing_Slow, actMapMax)
@@ -241,7 +219,8 @@ axActCurve_Pacing.spines['right'].set_visible(False)
 axActCurve_Pacing.plot(actCurve_Fast_x, actCurve_Fast, 'r')
 axActCurve_Pacing.plot(actCurve_Slow_x, actCurve_Slow, 'k')
 axActCurve_Pacing.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed')
-axActCurve_Pacing.xaxis.set_major_locator(ticker.MultipleLocator(5))
+axActCurve_Pacing.xaxis.set_major_locator(ticker.MultipleLocator(10))
+axActCurve_Pacing.xaxis.set_minor_locator(ticker.MultipleLocator(5))
 # Plot Ages activation curves
 axActCurve_Ages.set_ylabel('Tissue Activation (%)', fontsize=10)
 axActCurve_Ages.spines['top'].set_visible(False)
@@ -251,7 +230,8 @@ axActCurve_Ages.plot(actCurve_Ages_PSlow_x, actCurve_Ages_PSlow, 'k--', )
 axActCurve_Ages.plot(actCurve_Ages_AFast_x, actCurve_Ages_AFast, 'r')
 axActCurve_Ages.plot(actCurve_Ages_ASlow_x, actCurve_Ages_ASlow, 'k')
 axActCurve_Ages.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed')
-axActCurve_Ages.xaxis.set_major_locator(ticker.MultipleLocator(5))
+axActCurve_Ages.xaxis.set_major_locator(ticker.MultipleLocator(10))
+axActCurve_Ages.xaxis.set_minor_locator(ticker.MultipleLocator(5))
 
 # example_plot(axActCurve_Pacing)
 # example_plot(axActCurve_Ages)
