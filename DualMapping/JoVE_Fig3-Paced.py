@@ -422,7 +422,7 @@ durMapVm = np.rot90(np.loadtxt('data/20190322-pigb/APDMaps/APD-01-350_Vm.csv',
 durMapCa = np.rot90(np.loadtxt('data/20190322-pigb/APDMaps/APD-01-350_Ca.csv',
                                delimiter=',', skiprows=0))
 # Import restitution curve image
-restitution_img = mpimg.imread('data/Pigs_RestitutionCurve_APD80_CAD80.png')
+# restitution_img = mpimg.imread('data/Pigs_RestitutionCurve_APD80_CAD80.png')
 
 # Crop edges of duration maps, replace with NaNs
 # durMapVm[0:150, :] = np.nan
@@ -509,8 +509,8 @@ cb_dur.ax.tick_params(labelsize=fontsize4)
 axMapStats1.set_title('Restitution Curves', fontsize=fontsize3, weight='semibold')
 axMapStats2.set_title('Repolarization', fontsize=fontsize3, weight='semibold')
 # axMapStats.imshow(restitution_img)
-axMapStats1.axis('off')
-axMapStats2.axis('off')
+# axMapStats1.axis('off')
+# axMapStats2.axis('off')
 
 # Fill rest with example plots
 # Data
@@ -534,7 +534,8 @@ axMapStats2.axis('off')
 # example_plot(axMap_APD)
 # example_plot(axMap_CAD)
 
-# example_plot(axMapStats)
+example_plot(axMapStats1)
+example_plot(axMapStats2)
 
 
 # Show and save figure
