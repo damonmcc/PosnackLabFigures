@@ -11,6 +11,8 @@ import matplotlib.colors as colors
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import ScientificColourMaps5 as SCMaps
 
+colors_actcurves = ['b', 'r', 'k']
+lines_actcurves = ['-', '-']  # Vm: dark, Ca: light
 cmap_actMap = SCMaps.lajolla
 fontsize1, fontsize2, fontsize3, fontsize4 = [14, 10, 8, 6]
 X_CROP = [0, 0]  # to cut from left, right
@@ -79,23 +81,29 @@ def plot_map(axis, actmap, cmap, norm):
 
 
 def generate_actcurve(actmap, actmap_max):
+    # Flatten the activation map data into a 1-D array
+    actmap_flat = actmap.ravel()
+    # Remove the `nan` values
+    actmap_flat = actmap_flat[~np.isnan(actmap_flat)]
+
     # Frame rate (FPS)
     fps = 500
-    # frames / ms
+    # Convert to frames / ms
     fpms = fps / 1000
-    # Number of frames
-    frames = int((np.nanmax(actmap) - np.nanmin(actmap)) * (1 / fpms))
+    # Number of frames represented in this activation map
+    frames = int((np.nanmax(actmap_flat) - np.nanmin(actmap_flat)) * (1 / fpms))
 
-    # Bins for histogram calculation
-    xbins = np.linspace(start=0, stop=actmap.max(), num=frames)
-    hist = np.histogram(actmap, xbins)
+    # Create the bins for histogram calculation
+    xbins = np.linspace(start=0, stop=actmap_flat.max(), num=frames)
+    # Calculate the histogram
+    hist = np.histogram(actmap_flat, xbins)
     # a = np.hstack((rng.normal(size=1000), rng.normal(loc=5, scale=2, size=1000)))
     # tissueact = 100 * np.cumsum(hist(tim,xbins))/allpts;
 
-    # Calculate cumulative sum % of activation times
-    tissueact = 100 * np.cumsum(hist[0]) / actmap.size
-    # A array for plotting the activation curve
-    x_axes = np.linspace(start=0, stop=actmap.max(), num=frames - 1)
+    # Calculate cumulative sum % of tissue activation times
+    tissueact = 100 * np.cumsum(hist[0]) / actmap_flat.size
+    # An array for the x-axis while plotting the activation curve
+    x_axes = np.linspace(start=0, stop=actmap_flat.max(), num=frames - 1)
     return x_axes, tissueact
 
 
@@ -130,8 +138,8 @@ axActConst_Pacing.set_title('Activation Constants', fontsize=12)
 
 # Generate all activation maps
 # Pacing section (both adult)
-actMap_Pacing_Fast = generate_ActMap(conduction_v=50)
-actMap_Pacing_Slow = generate_ActMap(conduction_v=40)
+# actMap_Pacing_Fast = generate_ActMap(conduction_v=50)
+# actMap_Pacing_Slow = generate_ActMap(conduction_v=40)
 # Age comparison section
 # actMap_Ages_PFast = generate_ActMap(conduction_v=62)
 # actMap_Ages_PSlow = generate_ActMap(conduction_v=60)
@@ -143,25 +151,15 @@ actMap_Ages_ASlow = generate_ActMap(conduction_v=35)
 # ret, heart_thresh = cv2.threshold(heart, 150, np.nan, cv2.THRESH_TOZERO)
 
 # Import Activation Maps
-# actMapIMPORT_Ages_PFast = np.loadtxt('data/20190717-rata/ActMap-01-250_Vm.csv',
-#                                      delimiter=',', skiprows=0)
-# actMapIMPORT_Ages_PSlow = np.loadtxt('data/20190717-rata/ActMap-03-150_Vm.csv',
-#                                      delimiter=',', skiprows=0)
+actMap_Pacing_Fast = np.loadtxt('data/20190718-rata/ActMap-02-250_Vm.csv',
+                               delimiter=',', skiprows=0)
+actMap_Pacing_Slow = np.loadtxt('data/20190718-rata/ActMap-04-150_Vm.csv',
+                               delimiter=',', skiprows=0)
+
 actMap_Ages_PFast = np.loadtxt('data/20190717-rata/ActMap-01-250_Vm.csv',
                                delimiter=',', skiprows=0)
 actMap_Ages_PSlow = np.loadtxt('data/20190717-rata/ActMap-03-150_Vm.csv',
                                delimiter=',', skiprows=0)
-# Crop imported activation maps
-# h1_denom, h2_denom = 2.3, 1.18
-# w1_denom, w2_denom = 3, 2
-# h, w = actMap_Ages_PFast.shape
-# h1, h2 = int(h / h1_denom), int(h / h2_denom)
-# w1, w2 = int(w / w1_denom), int(w / w2_denom)
-# actMap_Ages_PFast = actMap_Ages_PFast[h1:h2, w1:w2]
-# h, w = actMap_Ages_PSlow.shape
-# h1, h2 = int(h / h1_denom), int(h / h2_denom)
-# w1, w2 = int(w / w1_denom), int(w / w2_denom)
-# actMap_Ages_PSlow = actMap_Ages_PSlow[h1:h2, w1:w2]
 
 
 actMaps = [actMap_Pacing_Slow, actMap_Pacing_Fast,
