@@ -8,10 +8,12 @@ import numpy as np
 from matplotlib import ticker
 import matplotlib.pyplot as plt
 import matplotlib.colors as colors
+from matplotlib.lines import Line2D
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import ScientificColourMaps5 as SCMaps
 
 colors_actcurves = ['r', 'k']
+labels_actcurves = ['250ms', '150ms']
 # colors_signals = ['0', '0.5']  # Vm: dark, Ca: light
 lines_actcurves = ['-', '-']  # Vm: dark, Ca: light
 cmap_actMap = SCMaps.lajolla
@@ -108,10 +110,10 @@ def generate_actcurve(actmap, actmap_max):
     return x_axes, tissueact
 
 
-def plot_actcurve(axis, x, y, color, ls='-', x_labels=False):
+def plot_actcurve(axis, x, y, color, ls='-', label=None, x_labels=False):
     axis.spines['top'].set_visible(False)
     axis.spines['right'].set_visible(False)
-    axis.plot(x, y, color=color, linestyle=ls)
+    axis.plot(x, y, color=color, linestyle=ls, label=label)
     # axis.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed')
     axis.xaxis.set_major_locator(ticker.MultipleLocator(10))
     axis.xaxis.set_minor_locator(ticker.MultipleLocator(5))
@@ -155,10 +157,10 @@ axActMap_Old3_150 = fig.add_subplot(gsActMaps_Old[5])
 
 axActMap_Young1_250.set_title('PCL 250 ms', fontsize=fontsize2)
 axActMap_Young1_150.set_title('PCL 150 ms', fontsize=fontsize2)
-axActMap_Young2_250.text(-50, 1, 'Youngish',
-                         ha='center', va='center', rotation=90, size=fontsize2)
-axActMap_Old2_250.text(-50, 1, 'Oldish',
-                       ha='center', va='center', rotation=90, size=fontsize2)
+# axActMap_Young2_250.text(-50, 1, 'Youngish',
+#                          ha='center', va='center', rotation=90, size=fontsize2)
+# axActMap_Old2_250.text(-50, 1, 'Oldish',
+#                        ha='center', va='center', rotation=90, size=fontsize2)
 
 # Setup Activation Curve section
 # Youngish section
@@ -176,20 +178,46 @@ axActCurve_Old3.set_xlabel('Time (ms)', fontsize=fontsize3)
 
 
 # Generate all activation maps (Lower PCL => Lower CV)
+fast, slow = 95, 75
 # Youngish section
-actMap_Young1_250 = generate_ActMap(conduction_v=55)
-actMap_Young1_150 = generate_ActMap(conduction_v=45)
-actMap_Young2_250 = generate_ActMap(conduction_v=55)
-actMap_Young2_150 = generate_ActMap(conduction_v=45)
-actMap_Young3_250 = generate_ActMap(conduction_v=55)
-actMap_Young3_150 = generate_ActMap(conduction_v=45)
+# actMap_Young1_250 = generate_ActMap(conduction_v=55)
+# actMap_Young1_150 = generate_ActMap(conduction_v=45)
+# actMap_Young2_250 = generate_ActMap(conduction_v=55)
+# actMap_Young2_150 = generate_ActMap(conduction_v=45)
+# actMap_Young3_250 = generate_ActMap(conduction_v=55)
+# actMap_Young3_150 = generate_ActMap(conduction_v=45)
+# Import maps
+axActMap_Young1_250.set_ylabel('P1')
+actMap_Young1_250 = np.loadtxt('data/20190717-rata/ActMap-01-250_Vm.csv',
+                               delimiter=',', skiprows=0)   # P1
+actMap_Young1_150 = np.loadtxt('data/20190717-rata/ActMap-03-150_Vm.csv',
+                               delimiter=',', skiprows=0)   # P1
+
+axActMap_Young2_250.set_ylabel('P1')
+actMap_Young2_250 = np.loadtxt('data/20190730-rata/ActMap-02-250_Vm.csv',
+                               delimiter=',', skiprows=0)   # P1
+actMap_Young2_150 = np.loadtxt('data/20190730-rata/ActMap-04-150_Vm.csv',
+                               delimiter=',', skiprows=0)   # P1
+
+axActMap_Young3_250.set_ylabel('P2')
+actMap_Young3_250 = np.loadtxt('data/20190718-rata/ActMap-02-250_Vm.csv',
+                               delimiter=',', skiprows=0)   # P2
+actMap_Young3_150 = np.loadtxt('data/20190718-rata/ActMap-04-150_Vm.csv',
+                               delimiter=',', skiprows=0)   # P2
+
 # Oldish section
-actMap_Old1_250 = generate_ActMap(conduction_v=55)
-actMap_Old1_150 = generate_ActMap(conduction_v=35)
-actMap_Old2_250 = generate_ActMap(conduction_v=55)
-actMap_Old2_150 = generate_ActMap(conduction_v=35)
-actMap_Old3_250 = generate_ActMap(conduction_v=55)
-actMap_Old3_150 = generate_ActMap(conduction_v=35)
+# actMap_Old1_250 = generate_ActMap(conduction_v=55)
+# actMap_Old1_150 = generate_ActMap(conduction_v=35)
+actMap_Old2_250 = generate_ActMap(conduction_v=fast)
+actMap_Old2_150 = generate_ActMap(conduction_v=slow)
+actMap_Old3_250 = generate_ActMap(conduction_v=fast)
+actMap_Old3_150 = generate_ActMap(conduction_v=slow)
+# Import maps
+axActMap_Old1_250.set_ylabel('P9')
+actMap_Old1_250 = np.loadtxt('data/20190725-rata/ActMap-02-250_Vm.csv',
+                               delimiter=',', skiprows=0)   # P9
+actMap_Old1_150 = np.loadtxt('data/20190725-rata/ActMap-04-150_Vm.csv',
+                               delimiter=',', skiprows=0)   # P9
 
 # Import heart image
 # heart = np.fliplr(np.rot90(plt.imread('data/20190322-pigb/06-300_RH237_0001.tif')))
@@ -245,7 +273,7 @@ img_colormap = plot_map(axis=axActMap_Old3_150, actmap=actMap_Old3_150, cmap=cma
 ax_ins1 = inset_axes(axActMap_Old3_150,
                      width="80%", height="5%",  # % of parent_bbox width
                      loc=8,
-                     bbox_to_anchor=(0, -0.25, 1, 1), bbox_transform=axActMap_Old3_150.transAxes,
+                     bbox_to_anchor=(0, -0.1, 1, 1), bbox_transform=axActMap_Old3_150.transAxes,
                      borderpad=0)
 cb1 = plt.colorbar(img_colormap, cax=ax_ins1, orientation="horizontal")
 cb1.set_label('Activation Time (ms)', fontsize=fontsize4)
@@ -274,24 +302,37 @@ actCurve_Old3_150_x, actCurve_Old3_150 = generate_actcurve(actMap_Old3_150, actM
 # Youngish section
 plot_actcurve(axis=axActCurve_Young1, x=actCurve_Young1_250_x, y=actCurve_Young1_250, color=colors_actcurves[0])
 plot_actcurve(axis=axActCurve_Young1, x=actCurve_Young1_150_x, y=actCurve_Young1_150, color=colors_actcurves[1])
+axActCurve_Young1.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed', lw=0.5)
 
 plot_actcurve(axis=axActCurve_Young2, x=actCurve_Young2_250_x, y=actCurve_Young2_250, color=colors_actcurves[0])
 plot_actcurve(axis=axActCurve_Young2, x=actCurve_Young2_150_x, y=actCurve_Young2_150, color=colors_actcurves[1])
+axActCurve_Young2.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed', lw=0.5)
 
 plot_actcurve(axis=axActCurve_Young3, x=actCurve_Young3_250_x, y=actCurve_Young3_250, color=colors_actcurves[0])
 plot_actcurve(axis=axActCurve_Young3, x=actCurve_Young3_150_x, y=actCurve_Young3_150, color=colors_actcurves[1])
+axActCurve_Young3.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed', lw=0.5)
 
 # Oldish section
 plot_actcurve(axis=axActCurve_Old1, x=actCurve_Old1_250_x, y=actCurve_Old1_250, color=colors_actcurves[0])
 plot_actcurve(axis=axActCurve_Old1, x=actCurve_Old1_150_x, y=actCurve_Old1_150, color=colors_actcurves[1])
+axActCurve_Old1.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed', lw=0.5)
 
 plot_actcurve(axis=axActCurve_Old2, x=actCurve_Old2_250_x, y=actCurve_Old2_250, color=colors_actcurves[0])
 plot_actcurve(axis=axActCurve_Old2, x=actCurve_Old2_150_x, y=actCurve_Old2_150, color=colors_actcurves[1])
+axActCurve_Old2.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed', lw=0.5)
 
 plot_actcurve(axis=axActCurve_Old3, x=actCurve_Old3_250_x, y=actCurve_Old3_250, color=colors_actcurves[0],
               x_labels=True)
 plot_actcurve(axis=axActCurve_Old3, x=actCurve_Old3_150_x, y=actCurve_Old3_150, color=colors_actcurves[1],
               x_labels=True)
+axActCurve_Old3.hlines(50, xmin=0, xmax=actMapMax, linestyles='dashed', lw=0.5)
+
+# Legend for all traces
+legend_lines = [Line2D([0], [0], color=colors_actcurves[0], lw=1),
+                Line2D([0], [0], color=colors_actcurves[1], lw=1)]
+axActCurve_Young1.legend(legend_lines, labels_actcurves,
+                         loc='lower right', bbox_to_anchor=(1, 0.1),
+                         ncol=1, prop={'size': fontsize4}, labelspacing=0.5, numpoints=1, frameon=False)
 
 # example_plot(axActCurve_Pacing)
 # example_plot(axActCurve_Ages)
