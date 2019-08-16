@@ -6,7 +6,7 @@ import matplotlib.image as mpimg
 from matplotlib import ticker
 from matplotlib import rcParams
 from matplotlib.lines import Line2D
-from matplotlib.patches import Circle
+from matplotlib.patches import Circle, Rectangle
 from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 from mpl_toolkits.axes_grid1.anchored_artists import AnchoredSizeBar
 import matplotlib.font_manager as fm
@@ -27,6 +27,7 @@ rcParams['font.family'] = "Arial"
 fontsize1, fontsize2, fontsize3, fontsize4 = [14, 10, 8, 6]
 X_CROP = [40, 20]   # to cut from left, right
 Y_CROP = [80, 50]   # to cut from bottom, top
+SCALE_cm_px = 0.016373
 
 
 def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
@@ -43,7 +44,7 @@ def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
 
         The first two dimensions (M, N) define the rows and columns of
         the image.
-    
+
     scale : bool, optional
         If True, include scale bar.
         Defaults to True.
@@ -53,7 +54,7 @@ def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
         Defaults to True.
 
     rois : list, optional
-        A list of dictionaries with structure {'y': int, 'x': int, 'r': int}
+        A list of dictionaries with structure {'y': int, 'x': int, 'r': [int]}
 
     Returns
     -------
@@ -68,15 +69,17 @@ def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
 
     if rois:
         # Create ROIs
-        for idx, roi in enumerate(rois):
-            roi_circle = Circle((roi['x'], roi['y']), roi['r'], fc=None, fill=None,
-                                ec=colors_rois[idx], lw=1)
-            axis.add_artist(roi_circle)
+        for idx_roi, roi in enumerate(rois):
+            for idx_r, r in enumerate(roi['r']):
+                roi_square = Rectangle((roi['x'] - (r/2), roi['y'] - (r/2)),
+                                       r, r,
+                                       fc=None, fill=None, ec=colors_rois[idx_roi], lw=0.5)
+                axis.add_artist(roi_square)
 
     # patch = Ellipse((width/2, height/2), width=width, height=height, transform=axis.transData)
     # img.set_clip_path(patch)
     # Scale Bar
-    scale_px_cm = 1 / 0.0149
+    scale_px_cm = 1 / SCALE_cm_px
     heart_scale = [scale_px_cm, scale_px_cm]  # x, y (pixels/cm)
     if scale:
         if scale_text:
@@ -98,7 +101,7 @@ def plot_heart(axis, heart_image, scale=True, scale_text=True, rois=None):
 
 def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
                frac=True, norm=False, invert=False, filter_lp=False,
-               color='b', x_ticks=True):
+               color='b', x_ticks=True, x_labels=False):
     data_x, data_y = 0, 0
 
     if imagej:
@@ -163,6 +166,8 @@ def plot_trace(axis, data, imagej=False, fps=None, x_span=0, x_end=None,
         if x_ticks:
             axis.xaxis.set_major_locator(ticker.MultipleLocator(1000))
             axis.xaxis.set_minor_locator(ticker.MultipleLocator(int(1000/4)))
+            if not x_labels:
+                axis.set_xticklabels([])
         else:
             axis.set_xticks([])
             axis.set_xticklabels([])
@@ -236,7 +241,7 @@ def plot_trace_overlay(axis, trace_vm, trace_ca):
               [ecg_scale_origin[1], ecg_scale_origin[1]],
               "k-", linewidth=1)
     axis.text(ecg_scale_origin[0], ecg_scale_origin[1] - ecg_scale_origin_pad[1],
-              str(ecg_scale_time[0]) + 'ms',
+              str(ecg_scale_time[0]) + ' ms',
               ha='left', va='top', fontsize=7, fontweight='semibold')
     # Get the max of both traces
     traces_max = max(np.nanmax(trace_vm_y), np.nanmax(trace_ca_y))
@@ -340,8 +345,8 @@ heart_Ca = np.rot90(plt.imread('data/20190322-pigb/01-350_Ca_0001.tif'))
 # X and Y flipped and subtracted from W and H, due to image rotation
 # RV, LV
 H, W = heart_Vm.shape
-Rois_Vm = [{'y': H - 398, 'x': 206, 'r': 15},
-           {'y': H - 198, 'x': 324, 'r': 15}]
+Rois_Vm = [{'y': H - 398, 'x': 206, 'r': [15, 30]},
+           {'y': H - 198, 'x': 324, 'r': [15, 30]}]
 Rois_Ca = Rois_Vm
 
 # Plot heart images
@@ -398,8 +403,10 @@ plot_trace(axTraces_Ca_RV_5x5, Trace_Ca_RV[5], imagej=True, fps=408, x_span=axTr
            color='b', x_ticks=False)
 axTraces_Ca_LV.text(axTraces_label_x, axTraces_label_y, 'LV', transform=axTraces_Ca_LV.transAxes,
                     rotation=90, ha='center', va='center', fontproperties=axTraces_label_font)
-plot_trace(axTraces_Ca_LV, Trace_Ca_LV[1], imagej=True, fps=408, color='r', x_span=axTraces_x_span)
-plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, color='r', x_span=axTraces_x_span)
+plot_trace(axTraces_Ca_LV, Trace_Ca_LV[1], imagej=True, fps=408, x_span=axTraces_x_span,
+           color='r', x_labels=True)
+plot_trace(axTraces_Ca_LV_5x5, Trace_Ca_LV[5], imagej=True, fps=408, x_span=axTraces_x_span,
+           color='r', x_labels=True)
 
 
 # Plot Analysis Section
