@@ -540,4 +540,4 @@ example_plot(axMapStats2)
 
 # Show and save figure
 fig.show()
-fig.savefig('JoVE_Fig3-Paced.svg')
+fig.savefig('JoVE-Paced.svg')

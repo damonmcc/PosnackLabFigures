@@ -392,4 +392,4 @@ plot_trace(axTracesVF_Ca_LV_5x5, TraceVF_Ca_LV[5], imagej=True, fps=408,
 
 # Show and save figure
 fig.show()
-fig.savefig('JoVE_Fig4-SinusRhythms.svg')
+fig.savefig('JoVE-SinusRhythms.svg')
