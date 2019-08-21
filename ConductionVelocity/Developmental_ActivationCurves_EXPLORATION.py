@@ -155,8 +155,8 @@ axActMap_Old2_150 = fig.add_subplot(gsActMaps_Old[3])
 axActMap_Old3_250 = fig.add_subplot(gsActMaps_Old[4])
 axActMap_Old3_150 = fig.add_subplot(gsActMaps_Old[5])
 
-axActMap_Young1_250.set_title('PCL 250 ms', fontsize=fontsize2)
-axActMap_Young1_150.set_title('PCL 150 ms', fontsize=fontsize2)
+axActMap_Young1_250.set_title('PCL 250 ms', fontsize=fontsize2, color=colors_actcurves[0])
+axActMap_Young1_150.set_title('PCL 150 ms', fontsize=fontsize2, color=colors_actcurves[1])
 # axActMap_Young2_250.text(-50, 1, 'Youngish',
 #                          ha='center', va='center', rotation=90, size=fontsize2)
 # axActMap_Old2_250.text(-50, 1, 'Oldish',
@@ -208,16 +208,30 @@ actMap_Young3_150 = np.loadtxt('data/20190718-rata/ActMap-04-150_Vm.csv',
 # Oldish section
 # actMap_Old1_250 = generate_ActMap(conduction_v=55)
 # actMap_Old1_150 = generate_ActMap(conduction_v=35)
-actMap_Old2_250 = generate_ActMap(conduction_v=fast)
-actMap_Old2_150 = generate_ActMap(conduction_v=slow)
-actMap_Old3_250 = generate_ActMap(conduction_v=fast)
-actMap_Old3_150 = generate_ActMap(conduction_v=slow)
+# actMap_Old2_250 = generate_ActMap(conduction_v=fast)
+# actMap_Old2_150 = generate_ActMap(conduction_v=slow)
+# actMap_Old3_250 = generate_ActMap(conduction_v=fast)
+# actMap_Old3_150 = generate_ActMap(conduction_v=slow)
 # Import maps
 axActMap_Old1_250.set_ylabel('P9')
 actMap_Old1_250 = np.loadtxt('data/20190725-rata/ActMap-02-250_Vm.csv',
                                delimiter=',', skiprows=0)   # P9
 actMap_Old1_150 = np.loadtxt('data/20190725-rata/ActMap-04-150_Vm.csv',
                                delimiter=',', skiprows=0)   # P9
+
+
+axActMap_Old2_250.set_ylabel('P10')
+actMap_Old2_250 = np.loadtxt('data/20190404-ratb/ActMap-01-250_Vm.csv',
+                               delimiter=',', skiprows=0)   # P9
+actMap_Old2_150 = np.loadtxt('data/20190404-ratb/ActMap-11-150_Vm.csv',
+                               delimiter=',', skiprows=0)   # P9
+
+axActMap_Old3_250.set_ylabel('P14')
+actMap_Old3_250 = np.loadtxt('data/20190404-rata/ActMap-02-250_Vm.csv',
+                               delimiter=',', skiprows=0)   # P9
+actMap_Old3_150 = np.loadtxt('data/20190404-rata/ActMap-12-150_Vm.csv',
+                               delimiter=',', skiprows=0)   # P9
+
 
 # Import heart image
 # heart = np.fliplr(np.rot90(plt.imread('data/20190322-pigb/06-300_RH237_0001.tif')))
